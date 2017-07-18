@@ -19,7 +19,7 @@ More resources can be found on the D-CENT webpage: http://dcentproject.eu/resour
 
 Furthermore, Freecoin's first social wallet pilots are informed by the research made in the [PIE Project](http://pieproject.eu).
 
-
+z
 ## Running the app locally
 
 Install all necessary dependencies, for instance using the following packages found on APT based systems:

@@ -4,7 +4,6 @@
 ;; R&D funded by the European Commission (FP7/CAPS 610349)
 
 ;; Copyright (C) 2015 Dyne.org foundation
-;; Copyright (C) 2015 Thoughtworks, Inc.
 
 ;; Sourcecode designed, written and maintained by
 ;; Denis Roio <jaromil@dyne.org>
@@ -30,6 +29,7 @@
   (:require [monger.collection :as mc]
             [monger.db :as mdb]
             [monger.core :as mongo]))
+
 
 (def ^:private wallet-collection "wallets")
 (def ^:private confirmation-collection "confirmations")
@@ -120,8 +120,9 @@
 
   (delete-all! [this]
     (reset! data {}))
-  
-  ;; TODO aggregate
+
+  (aggregate [this formula]
+    {}) ;; TODO: aggregate
   )
 
 (defn create-memory-store

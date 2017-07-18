@@ -1,4 +1,4 @@
-(defproject org.clojars.dyne/freecoin-lib "0.1.0-SNAPSHOT"
+(defproject org.clojars.dyne/freecoin-lib "0.2.0-SNAPSHOT"
   :description "Freecoin digital currency toolkit"
   :url "https://freecoin.dyne.org"
 
@@ -14,6 +14,9 @@
                  [simple-time "0.2.1" :exclusions [joda-time]]
                  [environ "1.1.0"]
                  [clojure-humanize "0.2.2"]
+
+                 ;; mongodb
+                 [com.novemberain/monger "3.1.0"]
 
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]]

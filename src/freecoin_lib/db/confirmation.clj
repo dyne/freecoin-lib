@@ -4,7 +4,6 @@
 ;; R&D funded by the European Commission (FP7/CAPS 610349)
 
 ;; Copyright (C) 2015 Dyne.org foundation
-;; Copyright (C) 2015 Thoughtworks, Inc.
 
 ;; Sourcecode designed, written and maintained by
 ;; Denis Roio <jaromil@dyne.org>
@@ -26,8 +25,8 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns freecoin-lib.db.confirmation
-  (:require [freecoin.db.mongo :as mongo]
-            [freecoin.utils :as util]))
+  (:require [freecoin-lib.db.mongo :as mongo]
+            [freecoin-lib.utils :as util]))
 
 (defn new-transaction-confirmation!
   ([confirmation-store uuid-generator sender-email recipient-email amount]

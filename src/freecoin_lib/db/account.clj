@@ -4,7 +4,6 @@
 ;; R&D funded by the European Commission (FP7/CAPS 610349)
 
 ;; Copyright (C) 2015 Dyne.org foundation
-;; Copyright (C) 2015 Thoughtworks, Inc.
 
 ;; Sourcecode designed, written and maintained by
 ;; Aspasia Beneti  <aspra@dyne.org>
