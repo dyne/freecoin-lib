@@ -1,8 +1,10 @@
-(ns freecoin-lib.test_helpers.store
+(ns freecoin-lib.test-helpers.store
   (:require [freecoin-lib.db.mongo :as db]
             [freecoin-lib.core :as bc])
-  (:import [freecoin-lib.db.mongo MemoryStore]
-           [freecoin-lib.blockchain InMemoryBlockchain])
+  ;; NOTE THE UNDERSCORE CHANGE IN NAMESPACE ON IMPORT
+  ;; IMPORTANT else "class not found" occurs
+  (:import [freecoin_lib.db.mongo MemoryStore]
+           [freecoin_lib.core InMemoryBlockchain])
   )
 
 (defprotocol TestStore
@@ -12,11 +14,11 @@
     "A map providing some summary information about the store"))
 
 (extend-protocol TestStore
-  db/->MemoryStore
+  MemoryStore
   (entry-count [this] (count @(:data this)))
   (summary [this] {:entry-count (count @(:data this))}))
 
 (extend-protocol TestStore
-  db/->InMemoryBlockchain
+  InMemoryBlockchain
   (entry-count [this] nil)
   (summary [this] {:transaction-count (count @(:transactions-atom this))}))
