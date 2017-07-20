@@ -146,11 +146,11 @@
 (defn create-tag-store [db]
   (create-mongo-store db tag-collection))
 
-;; (defn create-password-recovery-store [db ttl-password-recovery]
-;;   (let [store (create-mongo-store db password-recovery-collection)]
-;;     (mc/ensure-index db password-recovery-collection {:created-at 1}
-;;                      {:expireAfterSeconds ttl-password-recovery})
-;;     store))
+(defn create-password-recovery-store [db ttl-password-recovery]
+  (let [store (create-mongo-store db password-recovery-collection)]
+    (mc/ensure-index db password-recovery-collection {:created-at 1}
+                     {:expireAfterSeconds ttl-password-recovery})
+    store))
 
 (defn all-collection-names [db]
   (mdb/get-collection-names db))
