@@ -7,19 +7,12 @@ Freecoin is a toolkit to build participatory budget management wallets on top of
 
 [![Clojars Project](https://clojars.org/org.clojars.dyne/freecoin-lib/latest-version.svg)](https://clojars.org/org.clojars.dyne/freecoin-lib)
 
+[![Build Status](https://travis-ci.org/PIENews/freecoin-lib.svg?branch=master)](https://travis-ci.org/PIENews/freecoin-lib)
 
-## Design
+For more informations see: https://freecoin.dyne.org
 
-The design of Freecoin is informed by an extensive economic and user-centered research conducted by the D-CENT project and documented in deliverables that are available to the public:
+[![Freecoin.dyne.org](https://freecoin.dyne.org/images/freecoin_logo.png)](https://freecoin.dyne.org)
 
-- [Design of Social Digital Currency (D4.4)](http://dcentproject.eu/wp-content/uploads/2015/10/design_of_social_digital_currency_publication.pdf)
-- [Implementation of digital social currency infrastructure (D5.5)](http://dcentproject.eu/wp-content/uploads/2015/10/D5.5-Implementation-of-digital-social-currency-infrastructure-.pdf).
-
-More resources can be found on the D-CENT webpage: http://dcentproject.eu/resource_category/publications/
-
-Furthermore, Freecoin's first social wallet pilots are informed by the research made in the [PIE Project](http://pieproject.eu).
-
-z
 ## Running the app locally
 
 Install all necessary dependencies, for instance using the following packages found on APT based systems:
@@ -46,9 +39,8 @@ then from inside the Freecoin source, start it with
 
 ```
 lein repl
+(start)
 ```
-
-
 
 ## License
 
