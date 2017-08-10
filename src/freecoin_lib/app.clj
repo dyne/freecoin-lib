@@ -1,7 +1,6 @@
 (ns freecoin-lib.app
-  (:require [clojure.pprint :refer :all]
-            [taoensso.timbre :as log]
-            [freecoin-lib.core :refer :all]
+  (:require [taoensso.timbre :as log]
+            [freecoin-lib.core :refer [new-mongo]]
             [freecoin-lib.config :as config]
             [freecoin-lib.db.mongo :as mongo]
             [freecoin-lib.db.storage :as storage]))
@@ -22,7 +21,7 @@
     (let [config     (config/create-config)
           db         (-> config config/mongo-uri mongo/get-mongo-db)
           stores     (storage/create-mongo-stores db config)
-          backend    (new-stub stores)]
+          backend    (new-mongo stores)]
       (assoc ctx
              :db db
              :config config

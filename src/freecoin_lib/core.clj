@@ -126,7 +126,7 @@ Used to identify the class type."
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})}))
 
 ;; inherits from Blockchain and implements its methods
-(defrecord Stub [stores-m]
+(defrecord Mongo [stores-m]
   Blockchain
   (label [bk] (keyword (recname bk)))
 
@@ -214,10 +214,10 @@ Used to identify the class type."
 
   (redeem-voucher [bk account-id voucher] nil))
 
-(defn new-stub
+(defn new-mongo
   "Check that the blockchain is available, then return a record"
   [stores-m]
-  (Stub. stores-m))
+  (Mongo. stores-m))
 
 (defn in-memory-filter [entry params]
   true)
