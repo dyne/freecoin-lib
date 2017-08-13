@@ -170,7 +170,7 @@ Used to identify the class type."
     (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
           tags (or (:tags params) #{})
           transaction {:_id (str timestamp "-" from-account-id)
-                       :blockchain "STUB"
+                       :currency "MONGO"
                        :timestamp timestamp
                        :from-id from-account-id
                        :to-id to-account-id
@@ -264,7 +264,7 @@ Used to identify the class type."
     (let [now (time/format (time/add-days (time/datetime 2015 12 1) amount))
           tags (or (:tags params) #{})
           transaction {:transaction-id (str now "-" from-account-id)
-                       :blockchain "INMEMORYBLOCKCHAIN"
+                       :currency "INMEMORYBLOCKCHAIN"
                        :timestamp now
                        :from-id from-account-id
                        :to-id to-account-id
