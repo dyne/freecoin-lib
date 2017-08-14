@@ -32,6 +32,7 @@
   [account-store {:keys [first-name last-name email password] :as account-map}]
   (mongo/store! account-store :email (-> account-map
                                          (assoc :activated false)
+                                         (assoc :flags [])
                                          (update :password #(generate-hash %)))))
 
 
@@ -56,3 +57,9 @@
 
 (defn update-password! [account-store email password]
   (mongo/update! account-store email #(assoc % :password (generate-hash password))))
+
+(defn add-flag! [account-store email flag]
+  (mongo/update! account-store email (fn [account] (update account :flags #(conj % flag)))))
+
+(defn remove-flag! [account-store email flag]
+  (mongo/update! account-store email (fn [account] (update account :flags #(remove #{flag} %)))))
