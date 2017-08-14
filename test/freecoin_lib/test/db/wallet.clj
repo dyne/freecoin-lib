@@ -3,10 +3,11 @@
 ;; part of Decentralized Citizen Engagement Technologies (D-CENT)
 ;; R&D funded by the European Commission (FP7/CAPS 610349)
 
-;; Copyright (C) 2015 Dyne.org foundation
+;; Copyright (C) 2017 Dyne.org foundation
 
 ;; Sourcecode designed, written and maintained by
 ;; Denis Roio <jaromil@dyne.org>
+;; Aspasia Beneti <aspra@dyne.org>
 
 ;; With contributions by
 ;; Duncan Mortimer <dmortime@thoughtworks.com>
@@ -24,7 +25,7 @@
 ;; You should have received a copy of the GNU Affero General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns freecoin-lib.wallet
+(ns freecoin-lib.test.db.wallet
   (:require [midje.sweet :refer :all]
             [freecoin-lib.core :as fb]
             [freecoin-lib.db
