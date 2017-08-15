@@ -40,7 +40,8 @@
   (mongo/update! account-store email #(assoc % :activated true)))
 
 (defn fetch [account-store email]
-  (some-> (mongo/fetch account-store email)))
+  (some-> (mongo/fetch account-store email)
+          (update :flags (fn [flags] (map #(keyword %) flags)))))
 
 (defn fetch-by-activation-id [account-store activation-id]
   (first (mongo/query account-store {:activation-id activation-id})))

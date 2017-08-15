@@ -37,7 +37,8 @@
 
                     
                     (facts "Create an account"
-                           (let [account-store (fm/create-mongo-store (test-db/get-test-db) "accounts")
+                           (let [flag :admin
+                                 account-store (fm/create-mongo-store (test-db/get-test-db) "accounts")
                                  first-name "a-user"
                                  last-name "user-surname"
                                  email "user@mail.com"
@@ -62,10 +63,11 @@
                                    (:flags (account/add-flag! account-store email :admin))  => [:admin]
 
                                    ;; This could be a bug - have posted a question https://stackoverflow.com/questions/45677891/keyword-item-in-moger-vector-is-converted-to-string
+                                   ;; UPDATE: manually converted to a keyword
                                    (fact "Caution!! Mongo converts the keywords to a string"
                                          (-> (account/fetch account-store email)
                                              :flags
-                                             (first))  => "admin"))
+                                             (first))  => flag))
 
                              (fact "Can remove a flag"
                                    (:flags (account/remove-flag! account-store email "admin"))  => []))))
