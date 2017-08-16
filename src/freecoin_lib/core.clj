@@ -50,7 +50,7 @@
   ;; transactions
   (list-transactions [bk params])
   (get-transaction   [bk account-id txid])
-  (make-transaction  [bk from-account-id amount to-account-id params from-account-email])
+  (make-transaction  [bk from-account-id amount to-account-id params])
 
   ;; tags
   (list-tags         [bk params])
@@ -126,7 +126,7 @@ Used to identify the class type."
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})}))
 
 ;; inherits from Blockchain and implements its methods
-(defrecord Stub [stores-m]
+(defrecord Mongo [stores-m]
   Blockchain
   (label [bk] (keyword (recname bk)))
 
@@ -166,11 +166,11 @@ Used to identify the class type."
   (get-transaction   [bk account-id txid] nil)
 
   ;; TODO: get rid of account-ids and replace with wallets
-  (make-transaction  [bk from-account-id amount to-account-id params from-account-email]
+  (make-transaction  [bk from-account-id amount to-account-id params]
     (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
           tags (or (:tags params) #{})
           transaction {:_id (str timestamp "-" from-account-id)
-                       :blockchain "STUB"
+                       :currency "MONGO"
                        :timestamp timestamp
                        :from-id from-account-id
                        :to-id to-account-id
@@ -181,7 +181,7 @@ Used to identify the class type."
       ;; amount of inserts
       (doall (map #(tag/create-tag! {:tag-store (:tag-store stores-m) 
                                      :tag %
-                                     :created-by from-account-email
+                                     :created-by from-account-id
                                      :created timestamp})
                   tags))
       ;; TODO: Keep track of accounts to verify validity of from- and
@@ -214,10 +214,10 @@ Used to identify the class type."
 
   (redeem-voucher [bk account-id voucher] nil))
 
-(defn new-stub
+(defn new-mongo
   "Check that the blockchain is available, then return a record"
   [stores-m]
-  (Stub. stores-m))
+  (Mongo. stores-m))
 
 (defn in-memory-filter [entry params]
   true)
@@ -258,13 +258,13 @@ Used to identify the class type."
                                        [(second list)]))))
 
   (get-transaction   [bk account-id txid] nil)
-  (make-transaction  [bk from-account-id amount to-account-id params from-account-email]
+  (make-transaction  [bk from-account-id amount to-account-id params]
     ;; to make tests possible the timestamp here is generated starting from
     ;; the 1 december 2015 plus a number of days that equals the amount
     (let [now (time/format (time/add-days (time/datetime 2015 12 1) amount))
           tags (or (:tags params) #{})
           transaction {:transaction-id (str now "-" from-account-id)
-                       :blockchain "INMEMORYBLOCKCHAIN"
+                       :currency "INMEMORYBLOCKCHAIN"
                        :timestamp now
                        :from-id from-account-id
                        :to-id to-account-id
@@ -272,7 +272,7 @@ Used to identify the class type."
                        :amount amount}]
 
       (doall (map #(swap! tags-atom assoc {:tag %
-                                           :created-by from-account-email
+                                           :created-by from-account-id
                                            :created now})
                   tags))
       
