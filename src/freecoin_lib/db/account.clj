@@ -29,12 +29,11 @@
   (hashers/derive password {:alg :pbkdf2+sha512}))
 
 (defn new-account!
-  [account-store {:keys [first-name last-name email password] :as account-map}]
+  [account-store {:keys [first-name last-name email password flags] :as account-map}]
   (mongo/store! account-store :email (-> account-map
                                          (assoc :activated false)
-                                         (assoc :flags [])
+                                         (assoc :flags (or flags []))
                                          (update :password #(generate-hash %)))))
-
 
 (defn activate! [account-store email]
   (mongo/update! account-store email #(assoc % :activated true)))
