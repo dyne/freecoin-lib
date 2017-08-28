@@ -34,7 +34,8 @@
              [tag :as tag]]
             [freecoin-lib.db.storage :as storage]
             [freecoin-lib.utils :as util]
-            [simple-time.core :as time]))
+            [simple-time.core :as time]
+            [schema.core :as s]))
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -125,8 +126,22 @@ Used to identify the class type."
              {:account-id
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})}))
 
+;;----  Schema
+
+(def MongoStore freecoin_lib.db.mongo.MongoStore)
+
+(s/defschema StoresMap
+  {:wallet-store MongoStore
+   :confirmation-store MongoStore
+   :account-store MongoStore
+   :transaction-store MongoStore
+   :tag-store MongoStore
+   :password-recovery-store MongoStore})
+
+;;----  Schema
+
 ;; inherits from Blockchain and implements its methods
-(defrecord Mongo [stores-m]
+(s/defrecord Mongo [stores-m :- StoresMap]
   Blockchain
   (label [bk] (keyword (recname bk)))
 
