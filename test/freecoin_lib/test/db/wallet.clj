@@ -30,28 +30,30 @@
             [freecoin-lib.core :as fb]
             [freecoin-lib.db
              [mongo :as fm]
-             [wallet :as wallet]]))
+             [wallet :as wallet]]
+            [schema.core :as s]))
 
+(s/with-fn-validation
 
-(facts "Can create and fetch an empty wallet"
-       (let [wallet-store (fm/create-memory-store)
-             blockchain (fb/create-in-memory-blockchain :bk)]
-         (fact "can create a wallet"
-               (let [{:keys [wallet apikey]} (wallet/new-empty-wallet! wallet-store blockchain
-                                                                       "name" "test@email.com")]
-                 wallet => (just {:name "name"
-                                  :email "test@email.com"
-                                  :public-key nil
-                                  :private-key nil
-                                  :account-id anything})))
-         
-         (fact "can fetch the wallet by its email"
-               (wallet/fetch wallet-store "test@email.com")
-               => (just {:name "name"
-                         :email "test@email.com"
-                         :public-key nil
-                         :private-key nil
-                         :account-id anything}))))
+  (facts "Can create and fetch an empty wallet"
+         (let [wallet-store (fm/create-memory-store)
+               blockchain (fb/create-in-memory-blockchain :bk)]
+           (fact "can create a wallet"
+                 (let [{:keys [wallet apikey]} (wallet/new-empty-wallet! wallet-store blockchain
+                                                                         "name" "test@email.com")]
+                   wallet => (just {:name "name"
+                                    :email "test@email.com"
+                                    :public-key nil
+                                    :private-key nil
+                                    :account-id anything})))
+           
+           (fact "can fetch the wallet by its email"
+                 (wallet/fetch wallet-store "test@email.com")
+                 => (just {:name "name"
+                           :email "test@email.com"
+                           :public-key nil
+                           :private-key nil
+                           :account-id anything})))))
 
 (defn create-wallet [wallet-store blockchain wallet-data]
   (let [{:keys [name email]} wallet-data]
@@ -63,22 +65,24 @@
                       {:name "Sarah Lastname" :email "sarah@email.com"}]]
     (doall (map (partial create-wallet wallet-store blockchain) wallets-data))))
 
-(facts "Can query wallet collection"
-       (let [wallet-store (fm/create-memory-store)
-             blockchain (fb/create-in-memory-blockchain :bk)
-             wallets (populate-wallet-store wallet-store blockchain)]
-         
-         (fact "without parameters, returns all wallets"
-               (wallet/query wallet-store) => (n-of anything 3))
+(s/with-fn-validation
 
-         (tabular
-          (fact "accepts an optional query map argument"
-                (wallet/query wallet-store ?query-m) => (n-of anything ?expected-count))
-          ?query-m                                      ?expected-count
-          {:name "James Jones"}                         2
-          {:name "Sarah Lastname"}                      1
-          {:name "Bob Nothere"}                         0
-          {:email "james@jones.com"}                    1
-          {:email "bob@nothere.com"}                    0
-          {:name "James Jones" :email "jim@jones.com"}  1
-          {:something "else"}                           0)))
+  (facts "Can query wallet collection"
+         (let [wallet-store (fm/create-memory-store)
+               blockchain (fb/create-in-memory-blockchain :bk)
+               wallets (populate-wallet-store wallet-store blockchain)]
+           
+           (fact "without parameters, returns all wallets"
+                 (wallet/query wallet-store) => (n-of anything 3))
+
+           (tabular
+            (fact "accepts an optional query map argument"
+                  (wallet/query wallet-store ?query-m) => (n-of anything ?expected-count))
+            ?query-m                                      ?expected-count
+            {:name "James Jones"}                         2
+            {:name "Sarah Lastname"}                      1
+            {:name "Bob Nothere"}                         0
+            {:email "james@jones.com"}                    1
+            {:email "bob@nothere.com"}                    0
+            {:name "James Jones" :email "jim@jones.com"}  1
+            {:something "else"}                           0))))

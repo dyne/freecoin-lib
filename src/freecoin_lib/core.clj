@@ -35,7 +35,8 @@
             [freecoin-lib.db.storage :as storage]
             [freecoin-lib.utils :as util]
             [simple-time.core :as time]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [freecoin-lib.freecoin-schema :refer [StoresMap]]))
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -44,6 +45,7 @@
   ;; account
   (import-account [bk account-id secret])
   (create-account [bk])
+  (list-accounts [bk])
 
   (get-address [bk account-id])
   (get-balance [bk account-id])
@@ -51,15 +53,18 @@
   ;; transactions
   (list-transactions [bk params])
   (get-transaction   [bk account-id txid])
-  (make-transaction  [bk from-account-id amount to-account-id params])
+  (create-transaction  [bk from-account-id amount to-account-id params])
 
   ;; tags
   (list-tags         [bk params])
-  (tag-details       [bk name params])
+  (get-tag       [bk name params])
+  (create-tag    [bk name params])
+  (remove-tage   [bk name])
 
   ;; vouchers
   (create-voucher [bk account-id amount expiration secret])
-  (redeem-voucher [bk account-id voucher]))
+  (redeem-voucher [bk account-id voucher])
+  (list-vouchers  [bk]))
 
 (defrecord voucher
     [_id
@@ -126,26 +131,14 @@ Used to identify the class type."
              {:account-id
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})}))
 
-;;----  Schema
-
-(def MongoStore freecoin_lib.db.mongo.MongoStore)
-
-(s/defschema StoresMap
-  {:wallet-store MongoStore
-   :confirmation-store MongoStore
-   :account-store MongoStore
-   :transaction-store MongoStore
-   :tag-store MongoStore
-   :password-recovery-store MongoStore})
-
-;;----  Schema
-
 ;; inherits from Blockchain and implements its methods
 (s/defrecord Mongo [stores-m :- StoresMap]
   Blockchain
-  (label [bk] (keyword (recname bk)))
+  (label [bk]
+    (keyword (recname bk)))
 
-  (import-account [bk account-id secrets] nil)
+  (import-account [bk account-id secret]
+    nil)
 
   (create-account [bk]
     (let [secret (fxc/generate :url 64)
@@ -181,7 +174,7 @@ Used to identify the class type."
   (get-transaction   [bk account-id txid] nil)
 
   ;; TODO: get rid of account-ids and replace with wallets
-  (make-transaction  [bk from-account-id amount to-account-id params]
+  (create-transaction  [bk from-account-id amount to-account-id params]
     (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
           tags (or (:tags params) #{})
           transaction {:_id (str timestamp "-" from-account-id)
@@ -222,17 +215,17 @@ Used to identify the class type."
                  :created (:created tag)}))
             tags)))
 
-  (tag-details [bk name params]
+  (get-tag [bk name params]
     (first (filter #(= name (:tag %)) (list-tags bk params))))
 
   (create-voucher [bk account-id amount expiration secret] nil)
 
   (redeem-voucher [bk account-id voucher] nil))
 
-(defn new-mongo
+(s/defn ^:always-validate new-mongo
   "Check that the blockchain is available, then return a record"
-  [stores-m]
-  (Mongo. stores-m))
+  [stores-m :- StoresMap]
+  (s/validate Mongo (map->Mongo {:stores-m stores-m})))
 
 (defn in-memory-filter [entry params]
   true)
@@ -241,10 +234,12 @@ Used to identify the class type."
 (defrecord InMemoryBlockchain [blockchain-label transactions-atom accounts-atom tags-atom]
   Blockchain
   ;; identifier
-  (label [bk] blockchain-label)
+  (label [bk]
+    blockchain-label)
 
   ;; account
-  (import-account [bk account-id secret] nil)
+  (import-account [bk account-id secret]
+    nil)
   (create-account [bk]
     (let [secret (fxc/generate :url 64)
           uniqueid (fxc/generate :url 128)]
@@ -273,7 +268,7 @@ Used to identify the class type."
                                        [(second list)]))))
 
   (get-transaction   [bk account-id txid] nil)
-  (make-transaction  [bk from-account-id amount to-account-id params]
+  (create-transaction  [bk from-account-id amount to-account-id params]
     ;; to make tests possible the timestamp here is generated starting from
     ;; the 1 december 2015 plus a number of days that equals the amount
     (let [now (time/format (time/add-days (time/datetime 2015 12 1) amount))
@@ -298,8 +293,11 @@ Used to identify the class type."
   (create-voucher [bk account-id amount expiration secret])
   (redeem-voucher [bk account-id voucher]))
 
-(defn create-in-memory-blockchain
-  ([label] (create-in-memory-blockchain label (atom {}) (atom {}) (atom {})))
+(s/defn create-in-memory-blockchain
+  ([label :- s/Keyword] (create-in-memory-blockchain label (atom {}) (atom {}) (atom {})))
 
-  ([label transactions-atom accounts-atom tags-atom]
-   (InMemoryBlockchain. label transactions-atom accounts-atom tags-atom)))
+  ([label :- s/Keyword transactions-atom :- clojure.lang.Atom accounts-atom :- clojure.lang.Atom tags-atom :- clojure.lang.Atom]
+   (map->InMemoryBlockchain {:blockchain-label label
+                             :transactions-atom transactions-atom
+                             :accounts-atom accounts-atom
+                             :tags-atom tags-atom})))
