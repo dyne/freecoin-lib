@@ -56,10 +56,10 @@
   (create-transaction  [bk from-account-id amount to-account-id params])
 
   ;; tags
-  (list-tags         [bk params])
+  (list-tags     [bk params])
   (get-tag       [bk name params])
   (create-tag    [bk name params])
-  (remove-tage   [bk name])
+  (remove-tag    [bk name])
 
   ;; vouchers
   (create-voucher [bk account-id amount expiration secret])
