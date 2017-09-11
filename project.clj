@@ -1,4 +1,4 @@
-(defproject org.clojars.dyne/freecoin-lib "0.3.0"
+(defproject org.clojars.dyne/freecoin-lib "0.4.0"
   :description "Freecoin digital currency toolkit"
   :url "https://freecoin.dyne.org"
 
@@ -19,7 +19,9 @@
                  [com.novemberain/monger "3.1.0"]
 
                  ;; fxc secret sharing protocol
-                 [org.clojars.dyne/fxc "0.5.0"]]
+                 [org.clojars.dyne/fxc "0.5.0"]
+
+                 [prismatic/schema "1.1.6"]]
 
   :source-paths ["src"]
   :resource-paths ["resources" "test-resources"]
