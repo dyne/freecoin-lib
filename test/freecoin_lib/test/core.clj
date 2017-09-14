@@ -11,7 +11,7 @@
 
 (facts "Validate agaist schemas"
 
-         (fact "Created stores fit the schema"
+         (fact Created Mongo stores fit the schema
                (let [uri "mongodb://localhost:27017/some-db"
                      db (mongo/get-mongo-db uri)
                      stores-m (storage/create-mongo-stores db)]
@@ -20,4 +20,12 @@
 
                  (blockchain/new-mongo stores-m) => truthy
 
-                 (blockchain/new-mongo nil) => (throws Exception))))
+                 (blockchain/new-mongo nil) => (throws Exception)))
+
+         (fact Created BTC RPC record validates against the schemas
+               (let [conf-file (-> "sample-btc-rpc.conf"
+                                   (clojure.java.io/resource)
+                                   (.getPath))]
+                 (blockchain/new-btc-rpc conf-file) => truthy
+
+                 (blockchain/new-btc-rpc nil) => (throws Exception))))
