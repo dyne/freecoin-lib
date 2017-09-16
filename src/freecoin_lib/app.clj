@@ -19,8 +19,9 @@
 (defn start [ctx]
   (if (contains? ctx :backend) ctx
     (let [config     (config/create-config)
+          ;; TODO: use config as argument, not single config keys
           db         (-> config config/mongo-uri mongo/get-mongo-db)
-          stores     (storage/create-mongo-stores db config)
+          stores     (storage/create-mongo-stores db) ;; here ttl optional arg
           backend    (new-mongo stores)]
       (assoc ctx
              :db db
