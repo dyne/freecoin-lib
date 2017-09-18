@@ -49,11 +49,12 @@
 
   ;; account
   (import-account [bk account-id secret])
-  (create-account [bk])
+  (create-account [bk name])
   (list-accounts [bk])
 
   (get-address [bk account-id])
   (get-balance [bk account-id])
+  (get-total-balance [bk])
 
   ;; transactions
   (list-transactions [bk params])
@@ -70,7 +71,6 @@
   (create-voucher [bk account-id amount expiration secret])
   (redeem-voucher [bk account-id voucher])
   (list-vouchers  [bk]))
-
 (defrecord voucher
     [_id
      expiration
@@ -145,10 +145,11 @@ Used to identify the class type."
   (import-account [bk account-id secret]
     nil)
 
-  (create-account [bk]
+  (create-account [bk name]
     (let [secret (fxc/generate :url 64)
           uniqueid (fxc/generate :url 128)]
       {:account-id uniqueid
+       :account-name name
        ;; TODO: establish a unique-id generation algo and cycle of
        ;; life; this is not related to the :email uniqueness
        :account-secret secret}
@@ -245,7 +246,7 @@ Used to identify the class type."
   ;; account
   (import-account [bk account-id secret]
     nil)
-  (create-account [bk]
+  (create-account [bk name]
     (let [secret (fxc/generate :url 64)
           uniqueid (fxc/generate :url 128)]
       {:account-id uniqueid
@@ -316,21 +317,26 @@ Used to identify the class type."
   (import-account [bk account-id secret]
     ;; TODO
     )
-  (create-account [bk] 
-    ;; TODO 1st
-    ;;(btc/setaccount )
-    )
+
+  (create-account [bk name]
+    "Returns the address of the newely created account"
+    (btc/getnewaddress :account name :config rpc-config))  
+
   (list-accounts [bk]
     (btc/listaccounts :config rpc-config))
-
   
   (get-address [bk account-id]
     (btc/getaddressesbyaccount :config rpc-config
                                :account account-id))
+
   (get-balance [bk account-id]
+    "Fot the total balance account id has to be nil"
     (btc/getbalance :config rpc-config
                     :account account-id))
 
+  (get-total-balance [bk]
+    (get-balance bk nil))
+  
   (list-transactions [bk params]
     (let [{:keys [account-id count from]} params]
       (btc/listtransactions :config rpc-config
@@ -341,9 +347,14 @@ Used to identify the class type."
     (btc/gettransaction :config rpc-config
                         :txid txid))
   (create-transaction  [bk from-account-id amount to-account-id params]
-    ;; TODO: 1st combine sendfrom vs senddrawtransaction
-    #_(btc/send
-     )))
+    (btc/sendfrom :config rpc-config
+                  :fromaccount from-account-id
+                  :amount amount
+                  :tobitcoinaddress (or
+                                     (:to-address params)
+                                     (first (get-address bk to-account-id))) 
+                  :comment (:comment params)
+                  :commentto (:comment-to params))))
 
 (s/defn ^:always-validate new-btc-rpc
   ([currency :- s/Str]
