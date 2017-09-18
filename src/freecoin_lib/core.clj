@@ -307,20 +307,51 @@ Used to identify the class type."
                              :accounts-atom accounts-atom
                              :tags-atom tags-atom})))
 
-(s/defrecord BtcRpc [rpc-config :- RPCconfig]
+(s/defrecord BtcRpc [label :- s/Str
+                     rpc-config :- RPCconfig]
   Blockchain
+  (label [bk]
+    label)
+
+  (import-account [bk account-id secret]
+    ;; TODO
+    )
+  (create-account [bk] 
+    ;; TODO 1st
+    ;;(btc/setaccount )
+    )
   (list-accounts [bk]
     (btc/listaccounts :config rpc-config))
+
   
   (get-address [bk account-id]
     (btc/getaddressesbyaccount :config rpc-config
-                               :account account-id)))
+                               :account account-id))
+  (get-balance [bk account-id]
+    (btc/getbalance :config rpc-config
+                    :account account-id))
+
+  (list-transactions [bk params]
+    (let [{:keys [account-id count from]} params]
+      (btc/listtransactions :config rpc-config
+                            :account account-id
+                            :count count
+                            :from from)))
+  (get-transaction   [bk account-id txid]
+    (btc/gettransaction :config rpc-config
+                        :txid txid))
+  (create-transaction  [bk from-account-id amount to-account-id params]
+    ;; TODO: 1st combine sendfrom vs senddrawtransaction
+    #_(btc/send
+     )))
 
 (s/defn ^:always-validate new-btc-rpc
-  ([]
+  ([currency :- s/Str]
    (-> (config/create-config)
        (config/rpc-config)
        (new-btc-rpc)))
-  ([rpc-config-path :- s/Str]
+  ([currency :- s/Str
+    rpc-config-path :- s/Str]
    (let [rpc-config (btc-conf/read-local-config rpc-config-path)]
-        (s/validate BtcRpc (map->BtcRpc {:rpc-config (dissoc rpc-config :txindex :daemon)})))))
+     (s/validate BtcRpc (map->BtcRpc {:label currency
+                                      :rpc-config (dissoc rpc-config :txindex :daemon)})))))

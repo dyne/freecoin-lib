@@ -26,6 +26,6 @@
                (let [conf-file (-> "sample-btc-rpc.conf"
                                    (clojure.java.io/resource)
                                    (.getPath))]
-                 (blockchain/new-btc-rpc conf-file) => truthy
+                 (blockchain/new-btc-rpc "FAIR" conf-file) => truthy
 
                  (blockchain/new-btc-rpc nil) => (throws Exception))))
