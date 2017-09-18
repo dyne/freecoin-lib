@@ -2,7 +2,7 @@
   (:require [midje.sweet :refer :all]
             [freecoin-lib
              [core  :as blockchain]
-             [freecoin-schema :as fc]]
+             [schemas :as fc]]
             [freecoin-lib.db
              [storage :as storage]
              [mongo :as mongo]]
