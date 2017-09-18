@@ -21,6 +21,9 @@
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]
 
+                 ;; config etc.
+                 [org.clojars.dyne/auxiliary "0.2.0-SNAPSHOT"]
+
                  [prismatic/schema "1.1.6"]]
 
   :source-paths ["src"]

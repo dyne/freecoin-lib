@@ -36,7 +36,7 @@
             [freecoin-lib.utils :as util]
             [simple-time.core :as time]
             [schema.core :as s]
-            [freecoin-lib.freecoin-schema :refer [StoresMap]]))
+            [freecoin-lib.schemas :refer [StoresMap]]))
 
 (defprotocol Blockchain
   ;; blockchain identifier

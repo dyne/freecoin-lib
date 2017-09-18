@@ -1,39 +1,31 @@
 (ns freecoin-lib.app
   (:require [taoensso.timbre :as log]
             [freecoin-lib.core :refer [new-mongo]]
+            [freecoin-lib.schemas :refer [Config]]
             [freecoin-lib.config :as config]
             [freecoin-lib.db.mongo :as mongo]
-            [freecoin-lib.db.storage :as storage]))
+            [freecoin-lib.db.storage :as storage]
+            [schema.core :as s]))
 
 
 ;; launching and halting the app
 (defonce ^:private app-state (atom {}))
 
-(defn connect-db [config]
-  (-> config config/mongo-uri mongo/get-mongo-db))
+(defn- mongo-conf-to-uri [conf]
+  (if-let [m (:mongo conf)]
+    (str "mongodb://" (:host m) ":" (:port m) "/" (:db m))))
 
-(defn disconnect-db [ctx]
-  (if-let [db (:db ctx)]
-      (mongo/disconnect db)))
-
-(defn start [ctx]
-  (if (contains? ctx :backend) ctx
-    (let [config     (config/create-config)
-          ;; TODO: use config as argument, not single config keys
-          db         (-> config config/mongo-uri mongo/get-mongo-db)
-          stores     (storage/create-mongo-stores db) ;; here ttl optional arg
-          backend    (new-mongo stores)]
-      (assoc ctx
-             :db db
-             :config config
-             :backend backend))))
+(defn start [config]
+  (if-let [conf config]
+    (if (s/validate Config conf)
+      (let [db         (-> conf mongo-conf-to-uri config/mongo-uri mongo/get-mongo-db)
+            stores     (storage/create-mongo-stores db) ;; here ttl optional arg
+            backend    (new-mongo stores)]
+        ;; return the base context
+        {:db db
+         :config (:freecoin config)
+         :backend backend}))))
+;; TODO: handle errors consistently
 
 (defn stop [ctx]
   (if-let [db (:db ctx)] (mongo/disconnect db)))
-
-;; For running from the repl
-;; (defn start []
-;;   (swap! app-state (comp launch connect-db)))
-
-;; (defn stop []
-;;   (swap! app-state (comp disconnect-db halt)))
