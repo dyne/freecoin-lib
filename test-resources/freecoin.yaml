@@ -1,0 +1,25 @@
+# Example config section for Freecoin
+mongo:
+  host: localhost
+  port: 8000
+  db:   freecoin
+
+# optional
+
+    # (s/optional-key :faircoin)
+    # {:host s/Str
+    #  :port s/Num
+    #  :pass s/Str}
+
+    # (s/optional-key :bitcoin)
+    # {:host s/Str
+    #  :port s/Num
+    #  :pass s/Str}
+
+    # (s/optional-key :multichain)
+    # {:host s/Str
+    #  :port s/Num
+    #  :pass s/Str}
+
+    # (s/optional-key :ethereum)
+    # {:socket s/Str}
