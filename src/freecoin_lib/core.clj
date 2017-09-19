@@ -60,7 +60,7 @@
 
   ;; transactions
   (list-transactions [bk params])
-  (get-transaction   [bk account-id txid])
+  (get-transaction   [bk txid])
   (create-transaction  [bk from-account-id amount to-account-id params])
 
   ;; tags
@@ -179,7 +179,7 @@ Used to identify the class type."
     (normalize-transactions
      (mongo/query (storage/get-transaction-store stores-m) (add-transaction-list-params params))))
 
-  (get-transaction   [bk account-id txid] nil)
+  (get-transaction   [bk txid] nil)
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
@@ -275,7 +275,7 @@ Used to identify the class type."
                                        list
                                        [(second list)]))))
 
-  (get-transaction   [bk account-id txid] nil)
+  (get-transaction   [bk txid] nil)
   (create-transaction  [bk from-account-id amount to-account-id params]
     ;; to make tests possible the timestamp here is generated starting from
     ;; the 1 december 2015 plus a number of days that equals the amount
@@ -340,12 +340,13 @@ Used to identify the class type."
     (get-balance bk nil))
   
   (list-transactions [bk params]
+    "Returns up to [count] most recent transactions skipping the first [from] transactions for account [account]. If [account] not provided it'll return recent transactions from all accounts."
     (let [{:keys [account-id count from]} params]
       (btc/listtransactions :config rpc-config
                             :account account-id
                             :count count
                             :from from)))
-  (get-transaction   [bk account-id txid]
+  (get-transaction   [bk txid]
     (btc/gettransaction :config rpc-config
                         :txid txid))
   (create-transaction  [bk from-account-id amount to-account-id params]
