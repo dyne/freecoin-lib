@@ -56,7 +56,7 @@
   (take-last 3 (:slices secret)))
 
 (defn new-empty-wallet! [wallet-store blockchain name email]
-  (let [{:keys [account-id account-secret]} (blockchain/create-account blockchain)
+  (let [{:keys [account-id account-secret]} (blockchain/create-account blockchain name)
         wallet (-> (empty-wallet name email)
                    (assoc :account-id account-id))]
     {:wallet       (mongo/store! wallet-store :email wallet)

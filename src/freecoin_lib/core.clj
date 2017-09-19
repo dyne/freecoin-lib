@@ -7,6 +7,7 @@
 
 ;; Sourcecode designed, written and maintained by
 ;; Denis Roio <jaromil@dyne.org>
+;; Aspasia Beneti <aspra@dyne.org>
 
 ;; With contributions by
 ;; Carlo Sciolla
@@ -33,10 +34,16 @@
              [mongo :as mongo]
              [tag :as tag]]
             [freecoin-lib.db.storage :as storage]
-            [freecoin-lib.utils :as util]
+            [freecoin-lib
+             [utils :as utils]
+             [config :as config]]
             [simple-time.core :as time]
             [schema.core :as s]
-            [freecoin-lib.freecoin-schema :refer [StoresMap]]))
+            [freecoin-lib.schemas :refer [StoresMap
+                                          RPCconfig]]
+            [clj-btc
+             [core :as btc]
+             [config :as btc-conf]]))
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -44,15 +51,16 @@
 
   ;; account
   (import-account [bk account-id secret])
-  (create-account [bk])
+  (create-account [bk name])
   (list-accounts [bk])
 
   (get-address [bk account-id])
   (get-balance [bk account-id])
+  (get-total-balance [bk])
 
   ;; transactions
   (list-transactions [bk params])
-  (get-transaction   [bk account-id txid])
+  (get-transaction   [bk txid])
   (create-transaction  [bk from-account-id amount to-account-id params])
 
   ;; tags
@@ -65,7 +73,6 @@
   (create-voucher [bk account-id amount expiration secret])
   (redeem-voucher [bk account-id voucher])
   (list-vouchers  [bk]))
-
 (defrecord voucher
     [_id
      expiration
@@ -105,7 +112,7 @@ Used to identify the class type."
   (reverse
    (sort-by :timestamp
             (map (fn [{:keys [amount] :as transaction}]
-                   (assoc transaction :amount (util/long->bigdecimal amount)))
+                   (assoc transaction :amount (utils/long->bigdecimal amount)))
                  list))))
 
 (defn merge-params [params f name updater]
@@ -140,10 +147,11 @@ Used to identify the class type."
   (import-account [bk account-id secret]
     nil)
 
-  (create-account [bk]
+  (create-account [bk name]
     (let [secret (fxc/generate :url 64)
           uniqueid (fxc/generate :url 128)]
       {:account-id uniqueid
+       :account-name name
        ;; TODO: establish a unique-id generation algo and cycle of
        ;; life; this is not related to the :email uniqueness
        :account-secret secret}
@@ -164,14 +172,14 @@ Used to identify the class type."
                                                           :total {"$sum" "$amount"}}}]))
           received (if received-map (:total received-map) 0)
           sent     (if sent-map (:total sent-map) 0)]
-      (util/long->bigdecimal (- received sent))))
+      (utils/long->bigdecimal (- received sent))))
 
   (list-transactions [bk params]
     (log/debug "getting transactions" params)
     (normalize-transactions
      (mongo/query (storage/get-transaction-store stores-m) (add-transaction-list-params params))))
 
-  (get-transaction   [bk account-id txid] nil)
+  (get-transaction   [bk txid] nil)
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
@@ -183,7 +191,7 @@ Used to identify the class type."
                        :from-id from-account-id
                        :to-id to-account-id
                        :tags tags
-                       :amount (util/bigdecimal->long amount)}]
+                       :amount (utils/bigdecimal->long amount)}]
       ;; TODO: Maybe better to do a batch insert with
       ;; monger.collection/insert-batch? More efficient for a large
       ;; amount of inserts
@@ -210,7 +218,7 @@ Used to identify the class type."
               (let [tag (tag/fetch (:tag-store stores-m) _id)]
                 {:tag   _id
                  :count count
-                 :amount (util/long->bigdecimal amount)
+                 :amount (utils/long->bigdecimal amount)
                  :created-by (:created-by tag)
                  :created (:created tag)}))
             tags)))
@@ -240,7 +248,7 @@ Used to identify the class type."
   ;; account
   (import-account [bk account-id secret]
     nil)
-  (create-account [bk]
+  (create-account [bk name]
     (let [secret (fxc/generate :url 64)
           uniqueid (fxc/generate :url 128)]
       {:account-id uniqueid
@@ -267,7 +275,7 @@ Used to identify the class type."
                                        list
                                        [(second list)]))))
 
-  (get-transaction   [bk account-id txid] nil)
+  (get-transaction   [bk txid] nil)
   (create-transaction  [bk from-account-id amount to-account-id params]
     ;; to make tests possible the timestamp here is generated starting from
     ;; the 1 december 2015 plus a number of days that equals the amount
@@ -301,3 +309,63 @@ Used to identify the class type."
                              :transactions-atom transactions-atom
                              :accounts-atom accounts-atom
                              :tags-atom tags-atom})))
+
+(s/defrecord BtcRpc [label :- s/Str
+                     rpc-config :- RPCconfig]
+  Blockchain
+  (label [bk]
+    label)
+
+  (import-account [bk account-id secret]
+    ;; TODO
+    )
+
+  (create-account [bk name]
+    "Returns the address of the newely created account"
+    (btc/getnewaddress :account name :config rpc-config))  
+
+  (list-accounts [bk]
+    (btc/listaccounts :config rpc-config))
+  
+  (get-address [bk account-id]
+    (btc/getaddressesbyaccount :config rpc-config
+                               :account account-id))
+
+  (get-balance [bk account-id]
+    "Fot the total balance account id has to be nil"
+    (btc/getbalance :config rpc-config
+                    :account account-id))
+
+  (get-total-balance [bk]
+    (get-balance bk nil))
+  
+  (list-transactions [bk params]
+    "Returns up to [count] most recent transactions skipping the first [from] transactions for account [account]. If [account] not provided it'll return recent transactions from all accounts."
+    (let [{:keys [account-id count from]} params]
+      (btc/listtransactions :config rpc-config
+                            :account account-id
+                            :count count
+                            :from from)))
+  (get-transaction   [bk txid]
+    (btc/gettransaction :config rpc-config
+                        :txid txid))
+  (create-transaction  [bk from-account-id amount to-account-id params]
+    (btc/sendfrom :config rpc-config
+                  :fromaccount from-account-id
+                  :amount amount
+                  :tobitcoinaddress (or
+                                     (:to-address params)
+                                     (first (get-address bk to-account-id))) 
+                  :comment (:comment params)
+                  :commentto (:comment-to params))))
+
+(s/defn ^:always-validate new-btc-rpc
+  ([currency :- s/Str]
+   (-> (config/create-config)
+       (config/rpc-config)
+       (new-btc-rpc)))
+  ([currency :- s/Str
+    rpc-config-path :- s/Str]
+   (let [rpc-config (btc-conf/read-local-config rpc-config-path)]
+     (s/validate BtcRpc (map->BtcRpc {:label currency
+                                      :rpc-config (dissoc rpc-config :txindex :daemon)})))))
