@@ -61,3 +61,12 @@
    :transaction-store MongoStore
    :tag-store MongoStore
    :password-recovery-store MongoStore})
+
+(def RPCconfig
+  {:rpcpassword s/Str
+   :rpcuser s/Str
+   (s/optional-key :testnet) s/Bool
+   :rpcport s/Int
+   :rpchost s/Str
+   (s/optional-key :txindex) s/Int
+   (s/optional-key :daemon) s/Int})

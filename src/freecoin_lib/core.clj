@@ -7,6 +7,7 @@
 
 ;; Sourcecode designed, written and maintained by
 ;; Denis Roio <jaromil@dyne.org>
+;; Aspasia Beneti <aspra@dyne.org>
 
 ;; With contributions by
 ;; Carlo Sciolla
@@ -33,10 +34,16 @@
              [mongo :as mongo]
              [tag :as tag]]
             [freecoin-lib.db.storage :as storage]
-            [freecoin-lib.utils :as util]
+            [freecoin-lib
+             [utils :as utils]
+             [config :as config]]
             [simple-time.core :as time]
             [schema.core :as s]
-            [freecoin-lib.schemas :refer [StoresMap]]))
+            [freecoin-lib.schemas :refer [StoresMap
+                                          RPCconfig]]
+            [clj-btc
+             [core :as btc]
+             [config :as btc-conf]]))
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -105,7 +112,7 @@ Used to identify the class type."
   (reverse
    (sort-by :timestamp
             (map (fn [{:keys [amount] :as transaction}]
-                   (assoc transaction :amount (util/long->bigdecimal amount)))
+                   (assoc transaction :amount (utils/long->bigdecimal amount)))
                  list))))
 
 (defn merge-params [params f name updater]
@@ -164,7 +171,7 @@ Used to identify the class type."
                                                           :total {"$sum" "$amount"}}}]))
           received (if received-map (:total received-map) 0)
           sent     (if sent-map (:total sent-map) 0)]
-      (util/long->bigdecimal (- received sent))))
+      (utils/long->bigdecimal (- received sent))))
 
   (list-transactions [bk params]
     (log/debug "getting transactions" params)
@@ -183,7 +190,7 @@ Used to identify the class type."
                        :from-id from-account-id
                        :to-id to-account-id
                        :tags tags
-                       :amount (util/bigdecimal->long amount)}]
+                       :amount (utils/bigdecimal->long amount)}]
       ;; TODO: Maybe better to do a batch insert with
       ;; monger.collection/insert-batch? More efficient for a large
       ;; amount of inserts
@@ -210,7 +217,7 @@ Used to identify the class type."
               (let [tag (tag/fetch (:tag-store stores-m) _id)]
                 {:tag   _id
                  :count count
-                 :amount (util/long->bigdecimal amount)
+                 :amount (utils/long->bigdecimal amount)
                  :created-by (:created-by tag)
                  :created (:created tag)}))
             tags)))
@@ -301,3 +308,21 @@ Used to identify the class type."
                              :transactions-atom transactions-atom
                              :accounts-atom accounts-atom
                              :tags-atom tags-atom})))
+
+(s/defrecord Faircoin2 [rpc-config :- RPCconfig]
+  Blockchain
+  (list-accounts [bk]
+    (btc/listaccounts :config rpc-config))
+  
+  (get-address [bk account-id]
+    (btc/getaddressesbyaccount :config rpc-config
+                               :account account-id)))
+
+(s/defn ^:always-validate new-faircoin2
+  ([]
+   (-> (config/create-config)
+       (config/rpc-config)
+       (new-faircoin2)))
+  ([rpc-config-path :- s/Str]
+   (let [rpc-config (btc-conf/read-local-config rpc-config-path)]
+        (s/validate Faircoin2 (map->Faircoin2 {:rpc-config (dissoc rpc-config :txindex :daemon)})))))
