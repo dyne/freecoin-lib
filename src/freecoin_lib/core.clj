@@ -34,7 +34,9 @@
              [mongo :as mongo]
              [tag :as tag]]
             [freecoin-lib.db.storage :as storage]
-            [freecoin-lib.utils :as util]
+            [freecoin-lib
+             [utils :as utils]
+             [config :as config]]
             [simple-time.core :as time]
             [schema.core :as s]
             [freecoin-lib.schemas :refer [StoresMap
