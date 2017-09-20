@@ -3,7 +3,8 @@
 
 (def env-vars #{:port :host :base-url :secure :debug
                 :client-id :client-secret :email-config
-                :admin-email :ttl-password-recovery})
+                :admin-email :ttl-password-recovery
+                :rpc-config})
 
 (defn create-config []
   (select-keys env/env env-vars))
@@ -32,6 +33,9 @@
 
 (defn email-config [config-m]
   (get-env config-m :email-config))
+
+(defn rpc-config [config-m]
+  (get-env config-m :rpc-config))
 
 (defn cookie-secret [config-m]
   (get-env config-m :cookie-secret "encryptthecookie"))
