@@ -26,32 +26,32 @@
 
 (def MongoStore freecoin_lib.db.mongo.MongoStore)
 
+(def schema_mongo
+  {:port s/Num
+   :host s/Str
+   :db   s/Str})
+
+(def schema_bitcoin_compatible
+  {:host s/Str
+   :port s/Num
+   :pass s/Str})
+
 (s/defschema Config
+  {
+   (s/required-key :mongo) schema_mongo
 
-   {:mongo
-    {:port s/Num
-     :host s/Str
-     :db   s/Str}
+   (s/optional-key :faircoin)   schema_bitcoin_compatible
 
-    (s/optional-key :faircoin)
-    {:host s/Str
-     :port s/Num
-     :pass s/Str}
+   (s/optional-key :bitcoin)    schema_bitcoin_compatible
 
-    (s/optional-key :bitcoin)
-    {:host s/Str
-     :port s/Num
-     :pass s/Str}
+   (s/optional-key :litecoin)   schema_bitcoin_compatible
 
-    (s/optional-key :multichain)
-    {:host s/Str
-     :port s/Num
-     :pass s/Str}
+   (s/optional-key :multichain) schema_bitcoin_compatible
 
-    (s/optional-key :ethereum)
-    {:socket s/Str}
+   ;;  (s/optional-key :ethereum)
+   ;;  {:socket s/Str}
 
-    })
+   })
 
 ;; internal validator for mongo backend (used by core/new-mongo)
 (s/defschema StoresMap
