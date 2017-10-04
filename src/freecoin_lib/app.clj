@@ -15,25 +15,23 @@
   (if-let [m conf]
     (str "mongodb://" (:host m) ":" (:port m) "/" (:db m))))
 
-(defn connect-mongo
-  "Connect a mongo database for metadata (required)" [conf]
-  (if (s/validate Config conf)
+(s/defn connect-mongo
+  "Connect a mongo database for metadata (required)" [conf :- Config]
     (-> (:mongo conf)
         mongo-conf-to-uri
         mongo/get-mongo-db
-        storage/create-mongo-stores)))
+        storage/create-mongo-stores))
 ;; TODO: else return error
 
-(defn start [config]
+(s/defn start [config :- Config]
   (if-let [conf config]
-    (if (s/validate Config conf)
       (let [db         (-> conf mongo-conf-to-uri config/mongo-uri mongo/get-mongo-db)
             stores     (storage/create-mongo-stores db) ;; here ttl optional arg
             backend    (new-mongo stores)]
         ;; return the base context
         {:db db
          :config (:freecoin config)
-         :backend backend}))))
+         :backend backend})))
 ;; TODO: handle errors consistently
 
 (defn disconnect-mongo [ctx]
