@@ -15,6 +15,15 @@
   (if-let [m (:mongo conf)]
     (str "mongodb://" (:host m) ":" (:port m) "/" (:db m))))
 
+(defn connect-mongo
+  "Connect a mongo database for metadata (required)" [conf]
+  (if (s/validate Config conf)
+    (-> (:mongo conf)
+        mongo-conf-to-uri
+        mongo/get-mongo-db
+        storage/create-mongo-stores)))
+;; TODO: else return error
+
 (defn start [config]
   (if-let [conf config]
     (if (s/validate Config conf)
@@ -27,5 +36,5 @@
          :backend backend}))))
 ;; TODO: handle errors consistently
 
-(defn stop [ctx]
-  (if-let [db (:db ctx)] (mongo/disconnect db)))
+(defn disconnect-mongo [ctx]
+  (if-let [db (:wallet-store ctx)] (mongo/disconnect db)))
