@@ -6,6 +6,7 @@
 ;; Copyright (C) 2015-2017 Dyne.org foundation
 
 ;; Sourcecode designed, written and maintained by
+;; Denis Roio <jaromil@dyne.org>
 ;; Aspasia Beneti <aspra@dyne.org>
 
 ;; This program is free software: you can redistribute it and/or modify
