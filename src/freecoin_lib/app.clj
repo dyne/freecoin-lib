@@ -12,7 +12,7 @@
 (defonce ^:private app-state (atom {}))
 
 (defn- mongo-conf-to-uri [conf]
-  (if-let [m (:mongo conf)]
+  (if-let [m conf]
     (str "mongodb://" (:host m) ":" (:port m) "/" (:db m))))
 
 (defn connect-mongo
