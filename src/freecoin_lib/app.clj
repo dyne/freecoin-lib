@@ -3,8 +3,8 @@
             [freecoin-lib.core :refer [new-mongo]]
             [freecoin-lib.schemas :refer [Config]]
             [freecoin-lib.config :as config]
-            [freecoin-lib.db.mongo :as mongo]
-            [freecoin-lib.db.storage :as storage]
+            [clj-storage.db.mongo :as mongo]
+            [freecoin-lib.db.freecoin :as db]
             [schema.core :as s]))
 
 
@@ -20,13 +20,13 @@
     (-> (:mongo conf)
         mongo-conf-to-uri
         mongo/get-mongo-db
-        storage/create-mongo-stores))
+        db/create-freecoin-stores))
 ;; TODO: else return error
 
 (s/defn start [config :- Config]
   (if-let [conf config]
       (let [db         (-> conf mongo-conf-to-uri config/mongo-uri mongo/get-mongo-db)
-            stores     (storage/create-mongo-stores db) ;; here ttl optional arg
+            stores     (db/create-freecoin-stores db) ;; here ttl optional arg
             backend    (new-mongo stores)]
         ;; return the base context
         {:db db

@@ -22,7 +22,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns freecoin-lib.db.account
-  (:require [freecoin-lib.db.mongo :as mongo]
+  (:require [clj-storage.core :as storage]
             [buddy.hashers :as hashers]))
 
 (defn- generate-hash [password]
@@ -30,36 +30,36 @@
 
 (defn new-account!
   [account-store {:keys [first-name last-name email password flags] :as account-map}]
-  (mongo/store! account-store :email (-> account-map
+  (storage/store! account-store :email (-> account-map
                                          (assoc :activated false)
                                          (assoc :flags (or flags []))
                                          (update :password #(generate-hash %)))))
 
 (defn activate! [account-store email]
-  (mongo/update! account-store email #(assoc % :activated true)))
+  (storage/update! account-store email #(assoc % :activated true)))
 
 (defn fetch [account-store email]
-  (some-> (mongo/fetch account-store email)
+  (some-> (storage/fetch account-store email)
           (update :flags (fn [flags] (map #(keyword %) flags)))))
 
 (defn fetch-by-activation-id [account-store activation-id]
-  (first (mongo/query account-store {:activation-id activation-id})))
+  (first (storage/query account-store {:activation-id activation-id})))
 
 (defn update-activation-id! [account-store email activation-link]
-  (mongo/update! account-store email #(assoc % :activation-id activation-link)))
+  (storage/update! account-store email #(assoc % :activation-id activation-link)))
 
 (defn delete! [account-store email]
-  (mongo/delete! account-store email))
+  (storage/delete! account-store email))
 
 (defn correct-password? [account-store email candidate-password]
   (hashers/check candidate-password
    (:password (fetch account-store email))))
 
 (defn update-password! [account-store email password]
-  (mongo/update! account-store email #(assoc % :password (generate-hash password))))
+  (storage/update! account-store email #(assoc % :password (generate-hash password))))
 
 (defn add-flag! [account-store email flag]
-  (mongo/update! account-store email (fn [account] (update account :flags #(conj % flag)))))
+  (storage/update! account-store email (fn [account] (update account :flags #(conj % flag)))))
 
 (defn remove-flag! [account-store email flag]
-  (mongo/update! account-store email (fn [account] (update account :flags #(remove #{flag} %)))))
+  (storage/update! account-store email (fn [account] (update account :flags #(remove #{flag} %)))))

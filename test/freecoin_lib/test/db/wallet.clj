@@ -28,15 +28,15 @@
 (ns freecoin-lib.test.db.wallet
   (:require [midje.sweet :refer :all]
             [freecoin-lib.core :as fb]
-            [freecoin-lib.db
-             [mongo :as fm]
+            [freecoin-lib.db 
              [wallet :as wallet]]
+            [clj-storage.core :as storage]
             [schema.core :as s]))
 
 (s/with-fn-validation
 
   (facts "Can create and fetch an empty wallet"
-         (let [wallet-store (fm/create-memory-store)
+         (let [wallet-store (storage/create-memory-store)
                blockchain (fb/create-in-memory-blockchain :bk)]
            (fact "can create a wallet"
                  (let [{:keys [wallet apikey]} (wallet/new-empty-wallet! wallet-store blockchain
@@ -68,7 +68,7 @@
 (s/with-fn-validation
 
   (facts "Can query wallet collection"
-         (let [wallet-store (fm/create-memory-store)
+         (let [wallet-store (storage/create-memory-store)
                blockchain (fb/create-in-memory-blockchain :bk)
                wallets (populate-wallet-store wallet-store blockchain)]
            
