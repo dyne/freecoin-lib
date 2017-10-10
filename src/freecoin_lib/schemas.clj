@@ -25,7 +25,7 @@
 (ns freecoin-lib.schemas
   (:require [schema.core :as s]))
 
-(def MongoStore freecoin_lib.db.mongo.MongoStore)
+(def MongoStore clj_storage.db.mongo.MongoStore)
 
 (def schema_mongo
   {:port s/Num

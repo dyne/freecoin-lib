@@ -26,9 +26,9 @@
 
 (ns freecoin-lib.test.db.account
   (:require [midje.sweet :refer :all]
-            [freecoin-lib.db
-             [mongo :as fm]
+            [freecoin-lib.db 
              [account :as account]]
+            [clj-storage.db.mongo :as mongo]
             [freecoin-lib.test.db.test-db :as test-db]
             [taoensso.timbre :as log]))
 
@@ -38,7 +38,7 @@
                     
                     (facts "Create an account"
                            (let [flag :admin
-                                 account-store (fm/create-mongo-store (test-db/get-test-db) "accounts")
+                                 account-store (mongo/create-mongo-store (test-db/get-test-db) "accounts")
                                  first-name "a-user"
                                  last-name "user-surname"
                                  email "user@mail.com"

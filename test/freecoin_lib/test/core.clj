@@ -3,9 +3,9 @@
             [freecoin-lib
              [core  :as blockchain]
              [schemas :as fc]]
-            [freecoin-lib.db
-             [storage :as storage]
-             [mongo :as mongo]]
+            [freecoin-lib.db.freecoin :as db]
+            [clj-storage.db.mongo :as mongo]
+            [clj-storage.core :as storage]
             [schema.core :as s]
             [taoensso.timbre :as log]))
 
@@ -14,10 +14,11 @@
          (fact Created Mongo stores fit the schema
                (let [uri "mongodb://localhost:27017/some-db"
                      db (mongo/get-mongo-db uri)
-                     stores-m (storage/create-mongo-stores db)]
+                     stores-m (db/create-freecoin-stores  db)]
 
                  (s/validate fc/StoresMap stores-m) => truthy
 
+                 ;; TODO validate TTl
                  (blockchain/new-mongo stores-m) => truthy
 
                  (blockchain/new-mongo nil) => (throws Exception)))
