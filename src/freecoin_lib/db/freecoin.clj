@@ -9,8 +9,9 @@
    "transaction-store"  {}
    "account-store" {}
    "tag-store" {} 
-   "password-recovery-store" {:expireAfterSeconds (or (:ttl-password-recovery args)
-                                                      1800)}})
+   "password-recovery-store" {:expireAfterSeconds (if-let [arg-map (first args)]
+                                                    (:ttl-password-recovery arg-map)
+                                                    1800)}})
 
 (defn create-freecoin-stores [db & args]
   (mongo/create-mongo-stores
@@ -18,4 +19,4 @@
    (stores-params-m args)))
 
 (defn create-in-memory-stores []
-  (storage/create-in-memory-stores (keys (stores-params-m {}))))
+  (storage/create-in-memory-stores (keys (stores-params-m []))))
