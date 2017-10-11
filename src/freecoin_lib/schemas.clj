@@ -25,8 +25,6 @@
 (ns freecoin-lib.schemas
   (:require [schema.core :as s]))
 
-(def MongoStore clj_storage.db.mongo.MongoStore)
-
 (def schema_mongo
   {:port s/Num
    :host s/Str
@@ -56,12 +54,12 @@
 
 ;; internal validator for mongo backend (used by core/new-mongo)
 (s/defschema StoresMap
-  {:wallet-store MongoStore
-   :confirmation-store MongoStore
-   :account-store MongoStore
-   :transaction-store MongoStore
-   :tag-store MongoStore
-   :password-recovery-store MongoStore})
+  {:wallet-store clj_storage.db.mongo.MongoStore
+   :confirmation-store clj_storage.db.mongo.MongoStore
+   :account-store clj_storage.db.mongo.MongoStore
+   :transaction-store clj_storage.db.mongo.MongoStore
+   :tag-store clj_storage.db.mongo.MongoStore
+   :password-recovery-store clj_storage.db.mongo.MongoStore})
 
 (def RPCconfig
   {:rpcpassword s/Str
