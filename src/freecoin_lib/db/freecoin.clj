@@ -5,12 +5,12 @@
 
 (defn stores-params-m [args]
   {"wallet-store" {}
-    "confirmation-store" {}
-    "transaction-store"  {}
-    "account-store" {}
-    "tag-store" {} 
+   "confirmation-store" {}
+   "transaction-store"  {}
+   "account-store" {}
+   "tag-store" {} 
    "password-recovery-store" {:expireAfterSeconds (or (:ttl-password-recovery args)
-                                                       1800)}})
+                                                      1800)}})
 
 (defn create-freecoin-stores [db & args]
   (mongo/create-mongo-stores
