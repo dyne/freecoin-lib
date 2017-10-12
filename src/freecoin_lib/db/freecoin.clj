@@ -14,9 +14,11 @@
                                                     1800)}})
 
 (defn create-freecoin-stores [db & args]
+  (log/debug "Creating the freecoin mongo stores")
   (mongo/create-mongo-stores
    db
    (stores-params-m args)))
 
 (defn create-in-memory-stores []
+  (log/debug "Creating in memory stores for testing the freecoin")
   (storage/create-in-memory-stores (keys (stores-params-m []))))
