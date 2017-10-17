@@ -31,9 +31,9 @@
             [taoensso.timbre :as log]
             [fxc.core :as fxc]
             [freecoin-lib.db
-             [mongo :as mongo]
              [tag :as tag]]
-            [freecoin-lib.db.storage :as storage]
+            [clj-storage.core :as storage]
+            [clj-storage.db.mongo :as mongo]
             [freecoin-lib
              [utils :as utils]
              [config :as config]]
@@ -162,11 +162,11 @@ Used to identify the class type."
   
   (get-balance [bk account-id]
     ;; we use the aggregate function in mongodb, sort of simplified map/reduce
-    (let [received-map (first (mongo/aggregate (storage/get-transaction-store stores-m) 
+    (let [received-map (first (storage/aggregate (:transaction-store stores-m) 
                                                  [{"$match" {:to-id account-id}}
                                                   {"$group" {:_id "$to-id"
                                                              :total {"$sum" "$amount"}}}]))
-          sent-map  (first (mongo/aggregate (storage/get-transaction-store stores-m)
+          sent-map  (first (storage/aggregate (:transaction-store stores-m)
                                               [{"$match" {:from-id account-id}}
                                                {"$group" {:_id "$from-id"
                                                           :total {"$sum" "$amount"}}}]))
@@ -177,7 +177,7 @@ Used to identify the class type."
   (list-transactions [bk params]
     (log/debug "getting transactions" params)
     (normalize-transactions
-     (mongo/query (storage/get-transaction-store stores-m) (add-transaction-list-params params))))
+     (storage/query (:transaction-store stores-m) (add-transaction-list-params params))))
 
   (get-transaction   [bk txid] nil)
 
@@ -202,7 +202,7 @@ Used to identify the class type."
                   tags))
       ;; TODO: Keep track of accounts to verify validity of from- and
       ;; to- accounts
-      (mongo/store! (storage/get-transaction-store stores-m) :_id transaction)
+      (storage/store! (:transaction-store stores-m) :_id transaction)
       ))
 
   (list-tags [bk params]
@@ -213,7 +213,7 @@ Used to identify the class type."
           params (into tags-params [{:$group {:_id "$tags"
                                               :count {"$sum" 1}
                                               :amount {"$sum" "$amount"}}}])
-          tags (mongo/aggregate (storage/get-transaction-store stores-m)  params)]
+          tags (storage/aggregate (:transaction-store stores-m)  params)]
       (mapv (fn [{:keys [_id count amount]}]
               (let [tag (tag/fetch (:tag-store stores-m) _id)]
                 {:tag   _id
@@ -305,10 +305,10 @@ Used to identify the class type."
   ([label :- s/Keyword] (create-in-memory-blockchain label (atom {}) (atom {}) (atom {})))
 
   ([label :- s/Keyword transactions-atom :- clojure.lang.Atom accounts-atom :- clojure.lang.Atom tags-atom :- clojure.lang.Atom]
-   (map->InMemoryBlockchain {:blockchain-label label
-                             :transactions-atom transactions-atom
-                             :accounts-atom accounts-atom
-                             :tags-atom tags-atom})))
+   (s/validate InMemoryBlockchain (map->InMemoryBlockchain {:blockchain-label label
+                                                            :transactions-atom transactions-atom
+                                                            :accounts-atom accounts-atom
+                                                            :tags-atom tags-atom}))))
 
 (s/defrecord BtcRpc [label :- s/Str
                      rpc-config :- RPCconfig]

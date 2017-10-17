@@ -1,11 +1,9 @@
 (ns freecoin-lib.test-helpers.store
-  (:require [freecoin-lib.db.mongo :as db]
-            [freecoin-lib.core :as bc])
+  (:require [freecoin-lib.core])
   ;; NOTE THE UNDERSCORE CHANGE IN NAMESPACE ON IMPORT
   ;; IMPORTANT else "class not found" occurs
-  (:import [freecoin_lib.db.mongo MemoryStore]
-           [freecoin_lib.core InMemoryBlockchain])
-  )
+  (:import [freecoin_lib.core InMemoryBlockchain]
+           [clj_storage.core MemoryStore]))
 
 (defprotocol TestStore
   (entry-count [s]

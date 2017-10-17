@@ -15,8 +15,8 @@
                  [environ "1.1.0"]
                  [clojure-humanize "0.2.2"]
 
-                 ;; mongodb
-                 [com.novemberain/monger "3.1.0"]
+                 ;; storage
+                 [org.clojars.dyne/clj-storage "0.3.0-SNAPSHOT"]
 
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]

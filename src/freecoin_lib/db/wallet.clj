@@ -27,7 +27,7 @@
 
 (ns freecoin-lib.db.wallet
   (:require [freecoin-lib.core :as blockchain]
-            [freecoin-lib.db.mongo :as mongo]))
+            [clj-storage.core :as storage]))
 
 (defn- empty-wallet [name email]
   {:name  name        ;; identifier, case insensitive, space counts
@@ -59,21 +59,21 @@
   (let [{:keys [account-id account-secret]} (blockchain/create-account blockchain name)
         wallet (-> (empty-wallet name email)
                    (assoc :account-id account-id))]
-    {:wallet       (mongo/store! wallet-store :email wallet)
+    {:wallet       (storage/store! wallet-store :email wallet)
      :apikey       (secret->apikey              account-secret)
      :participant  (secret->participant-shares  account-secret)
      :organization (secret->organization-shares account-secret)
      :auditor      (secret->auditor-shares      account-secret)}))
 
 (defn fetch [wallet-store email]
-  (mongo/fetch wallet-store email))
+  (storage/fetch wallet-store email))
 
 (defn fetch-by-name [wallet-store name]
-  (first (mongo/query wallet-store {:name name})))
+  (first (storage/query wallet-store {:name name})))
 
 (defn fetch-by-account-id [wallet-store name]
-  (first (mongo/query wallet-store {:account-id name})))
+  (first (storage/query wallet-store {:account-id name})))
 
 (defn query
   ([wallet-store] (query wallet-store {}))
-  ([wallet-store query-m] (mongo/query wallet-store query-m)))
+  ([wallet-store query-m] (storage/query wallet-store query-m)))

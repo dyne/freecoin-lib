@@ -22,23 +22,23 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns freecoin-lib.db.password-recovery
-  (:require [freecoin-lib.db.mongo :as mongo]
+  (:require [clj-storage.core :as storage]
             [buddy.hashers :as hashers]
             [taoensso.timbre :as log]))
 
 (defn new-entry!
   [password-recovery-store email recovery-id]
-  (mongo/store! password-recovery-store :email {:email email
+  (storage/store! password-recovery-store :email {:email email
                                                 :created-at (java.util.Date.)
                                                 :recovery-id recovery-id}))
 
 (defn fetch-by-password-recovery-id [password-recovery-store password-recovery-id]
-  (first (mongo/query password-recovery-store {:recovery-id password-recovery-id})))
+  (first (storage/query password-recovery-store {:recovery-id password-recovery-id})))
 
 (defn fetch [password-recovery-store email]
-  (some-> (mongo/fetch password-recovery-store email)))
+  (some-> (storage/fetch password-recovery-store email)))
 
 (defn remove! [password-recovery-store email]
-  (mongo/delete! password-recovery-store email))
+  (storage/delete! password-recovery-store email))
 
 

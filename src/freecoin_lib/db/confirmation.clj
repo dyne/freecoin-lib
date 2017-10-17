@@ -25,7 +25,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns freecoin-lib.db.confirmation
-  (:require [freecoin-lib.db.mongo :as mongo]
+  (:require [clj-storage.core :as storage]
             [freecoin-lib.utils :as util]))
 
 (defn new-transaction-confirmation!
@@ -38,13 +38,13 @@
                               :recipient-email recipient-email
                               :amount (util/bigdecimal->long amount)
                               :tags tags}}
-         stored (some-> (mongo/store! confirmation-store :uid confirmation)
+         stored (some-> (storage/store! confirmation-store :uid confirmation)
                         (update-in [:data :amount] util/long->bigdecimal))]
      stored)))
 
 (defn fetch [confirmation-store email]
-  (some-> (mongo/fetch confirmation-store email)
+  (some-> (storage/fetch confirmation-store email)
           (update-in [:data :amount] util/long->bigdecimal)))
 
 (defn delete! [confirmation-store email]
-  (mongo/delete! confirmation-store email))
+  (storage/delete! confirmation-store email))

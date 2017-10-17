@@ -22,12 +22,12 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (ns freecoin-lib.db.tag
-  (:require [freecoin-lib.db.mongo :as mongo]))
+  (:require [clj-storage.core :as storage]))
 
 (defn create-tag! [{:keys [tag-store tag created created-by] :as tag-map}] 
-  (when-not (mongo/fetch tag-store tag)
-    (mongo/store! tag-store :tag (-> tag-map
+  (when-not (storage/fetch tag-store tag)
+    (storage/store! tag-store :tag (-> tag-map
                                      (dissoc :tag-store)))))
 
 (defn fetch [tag-store tag]
-  (mongo/fetch tag-store tag))
+  (storage/fetch tag-store tag))
