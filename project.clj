@@ -30,6 +30,9 @@
                  ;; Bitcoin lib
                  [clj-btc "0.11.2"]
 
+                 ;; Used to generate sample data
+                 [org.clojure/test.check "0.9.0"]]
+
   :source-paths ["src"]
   :resource-paths ["resources" "test-resources"]
   :jvm-opts ["-Djava.security.egd=file:/dev/random"
@@ -39,8 +42,7 @@
              ;; prevent JVM exceptions without stack trace
              ]
   :env [[:base-url "http://localhost:8000"]]
-  :profiles {:dev [:dev-common :dev-local]
-             :dev-common {:dependencies [[midje "1.8.3"]]
-                          :repl-options {:init-ns freecoin-lib.core}
-                          :plugins [[lein-midje "3.1.3"]]}}
+  :profiles {:dev {:dependencies [[midje "1.8.3"]]
+                    :repl-options {:init-ns freecoin-lib.core}
+                    :plugins [[lein-midje "3.1.3"]]}}
   :plugins [[lein-environ "1.0.0"]])
