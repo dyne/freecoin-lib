@@ -42,6 +42,9 @@
   (some-> (storage/fetch account-store email)
           (update :flags (fn [flags] (map #(keyword %) flags)))))
 
+(defn fetch-all [account-store]
+  (storage/fetch-all account-store))
+
 (defn fetch-by-activation-id [account-store activation-id]
   (first (storage/query account-store {:activation-id activation-id})))
 

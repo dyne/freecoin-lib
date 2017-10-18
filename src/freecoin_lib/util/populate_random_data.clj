@@ -3,12 +3,11 @@
             [freecoin-lib.db
              [account :as account]
              [freecoin :as db]]
+            [freecoin-lib.core :as blockchain]
             [clj-storage.db.mongo :as mongo]
             [clojure.test.check.properties :as prop]
             [clojure.test.check :as tc]
             [taoensso.timbre :as log]))
-
-(def stores (atom {}))
 
 (defn string-generator [length]
   (gen/fmap #(apply str %) 
@@ -20,22 +19,33 @@
                                      :email (string-generator 8)
                                      :password (string-generator 8)))
 
+(defn- choose-random-account [account-store n]
+  (nth (account/fetch-all account-store)
+       (rand-int n)))
+
+(defn transaction-generation [bk stores n]
+  (blockchain/create-transaction bk
+                                 (-> stores
+                                     :account-store 
+                                     (choose-random-account n)
+                                     :email)
+                                 (rand)
+                                 (-> stores
+                                     :account-store
+                                     (choose-random-account n)
+                                     :email)
+                                 {}))
+
 (defn populate-data [n]
   (let [uri "mongodb://localhost:27017/freecoin"
         db (mongo/get-mongo-db uri)
-        _ (reset! stores (db/create-freecoin-stores db))
+        stores (db/create-freecoin-stores db)
+        bk (blockchain/->Mongo stores)
         gen-account
         (gen/fmap
-         #(account/new-account! (:account-store @stores) (merge % {:activated true
-                                                                   :flags [:admin]})) 
+         #(account/new-account! (:account-store stores) (merge % {:activated true
+                                                                  :flags [:admin]})) 
          account-generator)]
-    (gen/sample gen-account n)))
-
-
-
-
-
-(comment
-  (require '[clj-storage.core :as storage])
-  (storage/empty-db-stores! (log/spy @stores))
-  )
+    (dotimes [n n] (transaction-generation bk stores n))
+    #_(gen/sample gen-account n)
+    ))
