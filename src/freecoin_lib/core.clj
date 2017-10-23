@@ -179,7 +179,8 @@ Used to identify the class type."
     (normalize-transactions
      (storage/query (:transaction-store stores-m) (add-transaction-list-params params))))
 
-  (get-transaction   [bk txid] nil)
+  (get-transaction   [bk txid]
+    (storage/query (:transaction-store stores-m) {:transaction-id txid}))
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
