@@ -185,13 +185,15 @@ Used to identify the class type."
   (create-transaction  [bk from-account-id amount to-account-id params]
     (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
           tags (or (:tags params) #{})
+          transaction-id (:transaction-id params) 
           transaction {:_id (str timestamp "-" from-account-id)
                        :currency "MONGO"
                        :timestamp timestamp
                        :from-id from-account-id
                        :to-id to-account-id
                        :tags tags
-                       :amount (utils/bigdecimal->long amount)}]
+                       :amount (utils/bigdecimal->long amount)
+                       :transaction-id transaction-id}]
       ;; TODO: Maybe better to do a batch insert with
       ;; monger.collection/insert-batch? More efficient for a large
       ;; amount of inserts
