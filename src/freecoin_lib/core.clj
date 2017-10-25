@@ -185,7 +185,7 @@ Used to identify the class type."
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
     (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
-          tags (or (:tags params) #{})
+          tags (or (:tags params) [])
           transaction-id (:transaction-id params) 
           transaction {:_id (str timestamp "-" from-account-id)
                        :currency "MONGO"
