@@ -188,7 +188,7 @@ Used to identify the class type."
           tags (or (:tags params) [])
           transaction-id (:transaction-id params) 
           transaction {:_id (str timestamp "-" from-account-id)
-                       :currency "MONGO"
+                       :currency (or (:currency params) "MONGO")
                        :timestamp timestamp
                        :from-id from-account-id
                        :to-id to-account-id
