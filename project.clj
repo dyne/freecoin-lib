@@ -27,7 +27,11 @@
                  ;; Data validation
                  [prismatic/schema "1.1.6"]
 
-                 [clj-btc "0.11.2"]]
+                 ;; Bitcoin lib
+                 [clj-btc "0.11.2"]
+
+                 ;; error handling
+                 [failjure "1.2.0"]]
 
   :source-paths ["src"]
   :resource-paths ["resources" "test-resources"]

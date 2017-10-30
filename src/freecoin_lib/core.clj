@@ -43,7 +43,8 @@
                                           RPCconfig]]
             [clj-btc
              [core :as btc]
-             [config :as btc-conf]]))
+             [config :as btc-conf]]
+            [failjure.core :as f]))
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -353,14 +354,17 @@ Used to identify the class type."
     (btc/gettransaction :config rpc-config
                         :txid txid))
   (create-transaction  [bk from-account-id amount to-account-id params]
-    (btc/sendfrom :config rpc-config
-                  :fromaccount from-account-id
-                  :amount amount
-                  :tobitcoinaddress (or
-                                     (:to-address params)
-                                     (first (get-address bk to-account-id))) 
-                  :comment (:comment params)
-                  :commentto (:comment-to params))))
+    (try
+      (btc/sendfrom :config rpc-config
+                    :fromaccount from-account-id
+                    :amount amount
+                    :tobitcoinaddress (or
+                                       (:to-address params)
+                                       (first (get-address bk to-account-id))) 
+                    :comment (:comment params)
+                    :commentto (:comment-to params))
+      (catch java.lang.AssertionError e 
+        (f/fail "No transaction possible. The recipient is uknown.")))))
 
 (s/defn ^:always-validate new-btc-rpc
   ([currency :- s/Str]
