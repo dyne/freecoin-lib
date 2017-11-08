@@ -68,4 +68,5 @@
    :rpcport s/Int
    :rpchost s/Str
    (s/optional-key :txindex) s/Int
-   (s/optional-key :daemon) s/Int})
+   (s/optional-key :daemon) s/Int
+   (s/optional-key :port) s/Int})
