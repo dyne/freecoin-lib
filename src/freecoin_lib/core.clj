@@ -43,7 +43,8 @@
                                           RPCconfig]]
             [clj-btc
              [core :as btc]
-             [config :as btc-conf]]))
+             [config :as btc-conf]]
+            [failjure.core :as f]))
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -179,19 +180,22 @@ Used to identify the class type."
     (normalize-transactions
      (storage/query (:transaction-store stores-m) (add-transaction-list-params params))))
 
-  (get-transaction   [bk txid] nil)
+  (get-transaction   [bk txid]
+    (storage/query (:transaction-store stores-m) {:transaction-id txid}))
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
     (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
-          tags (or (:tags params) #{})
+          tags (or (:tags params) [])
+          transaction-id (:transaction-id params) 
           transaction {:_id (str timestamp "-" from-account-id)
-                       :currency "MONGO"
+                       :currency (or (:currency params) "MONGO")
                        :timestamp timestamp
                        :from-id from-account-id
                        :to-id to-account-id
                        :tags tags
-                       :amount (utils/bigdecimal->long amount)}]
+                       :amount (utils/bigdecimal->long amount)
+                       :transaction-id transaction-id}]
       ;; TODO: Maybe better to do a batch insert with
       ;; monger.collection/insert-batch? More efficient for a large
       ;; amount of inserts
@@ -350,14 +354,17 @@ Used to identify the class type."
     (btc/gettransaction :config rpc-config
                         :txid txid))
   (create-transaction  [bk from-account-id amount to-account-id params]
-    (btc/sendfrom :config rpc-config
-                  :fromaccount from-account-id
-                  :amount amount
-                  :tobitcoinaddress (or
-                                     (:to-address params)
-                                     (first (get-address bk to-account-id))) 
-                  :comment (:comment params)
-                  :commentto (:comment-to params))))
+    (try
+      (btc/sendfrom :config rpc-config
+                    :fromaccount from-account-id
+                    :amount amount
+                    :tobitcoinaddress (or
+                                       (:to-address params)
+                                       (first (get-address bk to-account-id))) 
+                    :comment (:comment params)
+                    :commentto (:comment-to params))
+      (catch java.lang.AssertionError e 
+        (f/fail "No transaction possible. The recipient is uknown.")))))
 
 (s/defn ^:always-validate new-btc-rpc
   ([currency :- s/Str]
