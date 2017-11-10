@@ -63,6 +63,7 @@
   (list-transactions [bk params])
   (get-transaction   [bk txid])
   (create-transaction  [bk from-account-id amount to-account-id params])
+  (update-transaction [bk txid fn])
 
   ;; tags
   (list-tags     [bk params])
@@ -209,6 +210,9 @@ Used to identify the class type."
       (storage/store! (:transaction-store stores-m) :_id transaction)
       ))
 
+  (update-transaction [bk txid fn]
+    (storage/update! (:transaction-store stores-m) {:transaction-id txid} fn))
+
   (list-tags [bk params]
     (let [by-tag [{:$unwind :$tags}]
           tags-params (apply conj by-tag (if (coll? params)
@@ -315,6 +319,7 @@ Used to identify the class type."
                                                             :tags-atom tags-atom}))))
 
 (s/defrecord BtcRpc [label :- s/Str
+                     number-confirmations :- s/Num
                      rpc-config :- RPCconfig]
   Blockchain
   (label [bk]
@@ -367,12 +372,15 @@ Used to identify the class type."
         (f/fail "No transaction possible. The recipient is uknown.")))))
 
 (s/defn ^:always-validate new-btc-rpc
-  ([currency :- s/Str]
+  ([currency :- s/Str
+    number-confirmations :- s/Num]
    (-> (config/create-config)
        (config/rpc-config)
        (new-btc-rpc)))
   ([currency :- s/Str
+    number-confirmations :- s/Num
     rpc-config-path :- s/Str]
    (let [rpc-config (btc-conf/read-local-config rpc-config-path)]
      (s/validate BtcRpc (map->BtcRpc {:label currency
+                                      :number-confirmations number-confirmations 
                                       :rpc-config (dissoc rpc-config :txindex :daemon)})))))
