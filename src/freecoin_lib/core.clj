@@ -63,6 +63,7 @@
   (list-transactions [bk params])
   (get-transaction   [bk txid])
   (create-transaction  [bk from-account-id amount to-account-id params])
+  (update-transaction [bk txid fn])
 
   ;; tags
   (list-tags     [bk params])
@@ -208,6 +209,9 @@ Used to identify the class type."
       ;; to- accounts
       (storage/store! (:transaction-store stores-m) :_id transaction)
       ))
+
+  (update-transaction [bk txid fn]
+    (storage/update! (:transaction-store stores-m) {:transaction-id txid} fn))
 
   (list-tags [bk params]
     (let [by-tag [{:$unwind :$tags}]
