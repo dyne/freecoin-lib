@@ -64,6 +64,7 @@
   (get-transaction   [bk txid])
   (create-transaction  [bk from-account-id amount to-account-id params])
   (update-transaction [bk txid fn])
+  (move [bk from-account-id amount to-account-is params])
 
   ;; tags
   (list-tags     [bk params])
@@ -370,7 +371,15 @@ Used to identify the class type."
                     :comment (:comment params)
                     :commentto (:comment-to params))
       (catch java.lang.AssertionError e 
-        (f/fail "No transaction possible. The recipient is uknown.")))))
+        (f/fail "No transaction possible. The recipient is uknown."))))
+
+  ;; ATTENTION: if the to-account or from-account dont exist they will be created
+  (move [bk from-account-id amount to-account-id params]
+    (btc/move :config rpc-config
+              :fromaccount from-account-id
+              :amount amount
+              :toaccount to-account-id
+              :comment (:comment params))))
 
 (s/defn ^:always-validate new-btc-rpc
   ([currency :- s/Str
