@@ -215,6 +215,7 @@ Used to identify the class type."
     (storage/update! (:transaction-store stores-m) {:transaction-id txid} fn))
 
   (list-tags [bk params]
+    (log/info "PARA " params)
     (let [by-tag [{:$unwind :$tags}]
           tags-params (apply conj by-tag (if (coll? params)
                                              params
@@ -222,7 +223,8 @@ Used to identify the class type."
           params (into tags-params [{:$group {:_id "$tags"
                                               :count {"$sum" 1}
                                               :amount {"$sum" "$amount"}}}])
-          tags (storage/aggregate (:transaction-store stores-m)  params)]
+          filtered-params (into [{"$match" {:currency "mongo"}}] (log/spy params))
+          tags (storage/aggregate (:transaction-store stores-m) (log/spy filtered-params))]
       (mapv (fn [{:keys [_id count amount]}]
               (let [tag (tag/fetch (:tag-store stores-m) _id)]
                 {:tag   _id
@@ -233,7 +235,7 @@ Used to identify the class type."
             tags)))
 
   (get-tag [bk name params]
-    (first (filter #(= name (:tag %)) (list-tags bk params))))
+    (first (filter #(= name (:tag %)) (log/spy (list-tags bk params)))))
 
   (create-voucher [bk account-id amount expiration secret] nil)
 
