@@ -25,7 +25,7 @@
   (:require [midje.sweet :refer :all] 
             [clj-storage.db.mongo :as mongo]
             [clj-storage.core :as storage]
-            [freecoin-lib.test.db.test-db :as test-db]
+            [clj-storage.test.db.test-db :as test-db]
             [freecoin-lib
              [utils :as utils]
              [core :as blockchain]]
