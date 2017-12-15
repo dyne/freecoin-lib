@@ -56,10 +56,8 @@
 (s/defschema StoresMap
   {:wallet-store clj_storage.db.mongo.MongoStore
    :confirmation-store clj_storage.db.mongo.MongoStore
-   :account-store clj_storage.db.mongo.MongoStore
    :transaction-store clj_storage.db.mongo.MongoStore
-   :tag-store clj_storage.db.mongo.MongoStore
-   :password-recovery-store clj_storage.db.mongo.MongoStore})
+   :tag-store clj_storage.db.mongo.MongoStore})
 
 (def RPCconfig
   {:rpcpassword s/Str
