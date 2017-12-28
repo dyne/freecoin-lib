@@ -2,8 +2,7 @@
   (:require [environ.core :as env]))
 
 (def env-vars #{:port :host :base-url :secure :debug
-                :client-id :client-secret :email-config
-                :ttl-password-recovery :rpc-config})
+                :client-id :client-secret :rpc-config})
 
 (defn create-config []
   (select-keys env/env env-vars))
@@ -30,9 +29,6 @@
 (defn client-secret [config-m]
   (get-env config-m :client-secret))
 
-(defn email-config [config-m]
-  (get-env config-m :email-config))
-
 (defn rpc-config [config-m]
   (get-env config-m :rpc-config))
 
@@ -53,6 +49,3 @@
 
 (defn secure? [config-m]
   (not (= "false" (get-env config-m :secure "true"))))
-
-(defn ttl-password-recovery [config-m]
-  (clojure.edn/read-string (get-env config-m :ttl-password-recovery)))
