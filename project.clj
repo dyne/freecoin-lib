@@ -1,5 +1,4 @@
-
-(defproject org.clojars.dyne/freecoin-lib "0.7.0"  
+(defproject org.clojars.dyne/freecoin-lib "0.8.0-SNAPSHOT"  
   :description "Freecoin digital currency toolkit"
   :url "https://freecoin.dyne.org"
 
@@ -11,19 +10,18 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [com.taoensso/timbre "4.10.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]
-                 [buddy/buddy-hashers "1.2.0"]
                  [simple-time "0.2.1" :exclusions [joda-time]]
                  [environ "1.1.0"]
                  [clojure-humanize "0.2.2"]
 
                  ;; storage
-                 [org.clojars.dyne/clj-storage "0.4.0"]
+                 [org.clojars.dyne/clj-storage "0.5.0"]
 
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]
 
                  ;; config etc.
-                 [org.clojars.dyne/auxiliary "0.2.0-SNAPSHOT"]
+                 [org.clojars.dyne/auxiliary "0.4.0"]
 
                  ;; Data validation
                  [prismatic/schema "1.1.6"]

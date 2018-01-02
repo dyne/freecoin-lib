@@ -1,17 +1,14 @@
 (ns freecoin-lib.db.freecoin
   (:require [clj-storage.db.mongo :as mongo]
             [clj-storage.core :as storage]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            ))
 
 (defn stores-params-m [args]
   {"wallet-store" {}
    "confirmation-store" {}
    "transaction-store"  {}
-   "account-store" {}
-   "tag-store" {} 
-   "password-recovery-store" {:expireAfterSeconds (if-let [arg-map (first args)]
-                                                    (:ttl-password-recovery arg-map)
-                                                    1800)}})
+   "tag-store" {}})
 
 (defn create-freecoin-stores [db & args]
   (log/debug "Creating the freecoin mongo stores")
