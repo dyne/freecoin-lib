@@ -7,7 +7,7 @@ Freecoin is a toolkit to build participatory budget management wallets on top of
 
 [![Clojars Project](https://clojars.org/org.clojars.dyne/freecoin-lib/latest-version.svg)](https://clojars.org/org.clojars.dyne/freecoin-lib)
 
-[![Build Status](https://travis-ci.org/PIENews/freecoin-lib.svg?branch=master)](https://travis-ci.org/PIENews/freecoin-lib)
+[![Build Status](https://travis-ci.org/Commonfare-net/freecoin-lib.svg?branch=master)](https://travis-ci.org/Commonfare-net/freecoin-lib)
 
 For more informations see: https://freecoin.dyne.org
 
