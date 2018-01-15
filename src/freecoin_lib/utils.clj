@@ -61,7 +61,7 @@
     'FACT  nil ;; (dolog n t d)
     (dolog n t d)))
 
-;; TODO: why?
+;; The reason for those two functions is that Mongo is using fixed decimals and there might be loss of presicion https://stackoverflow.com/questions/27967460/lift-store-bigdecimal-in-mongodb
 (defn bigdecimal->long
   "Convert from BigDecimal to long for storage into mongo"
   [bd]
