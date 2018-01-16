@@ -189,7 +189,7 @@ Used to identify the class type."
   (create-transaction  [bk from-account-id amount to-account-id params]
     (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
           tags (or (:tags params) [])
-          transaction-id (:transaction-id params) 
+          transaction-id (or (:transaction-id params) (fxc/generate 32))
           transaction {:_id (str timestamp "-" from-account-id)
                        :currency (or (:currency params) "MONGO")
                        :timestamp timestamp
