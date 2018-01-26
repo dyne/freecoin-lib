@@ -358,8 +358,17 @@ Used to identify the class type."
                             :count count
                             :from from)))
   (get-transaction   [bk txid]
-    (btc/gettransaction :config rpc-config
-                        :txid txid))
+    (let [response (btc/gettransaction :config rpc-config
+                                       :txid txid)]
+      (if (get response "amount")
+        response
+        ;; try raw transaction
+        (let [raw-transaction (btc/getrawtransaction :config rpc-config
+                                                     :txid txid
+                                                     ;:verbose true
+                                                     )]
+          (btc/decoderawtransaction :config rpc-config
+                                    :hex-string raw-transaction)))))
   (create-transaction  [bk from-account-id amount to-account-id params]
     (try
       (btc/sendfrom :config rpc-config
