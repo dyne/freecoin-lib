@@ -145,7 +145,7 @@ Used to identify the class type."
 (s/defrecord Mongo [stores-m :- StoresMap]
   Blockchain
   (label [bk]
-    (keyword (recname bk)))
+    (recname bk))
 
   (import-account [bk account-id secret]
     nil)
