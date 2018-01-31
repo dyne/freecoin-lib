@@ -208,7 +208,9 @@ Used to identify the class type."
                   tags))
       ;; TODO: Keep track of accounts to verify validity of from- and
       ;; to- accounts
-      (storage/store! (:transaction-store stores-m) :_id transaction)
+      (-> (storage/store! (:transaction-store stores-m) :_id transaction)
+          ;; Back to bigdecimals for the sake of representation
+          (update :amount #(utils/long->bigdecimal %)))
       ))
 
   (update-transaction [bk txid fn]
