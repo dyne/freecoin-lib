@@ -373,14 +373,16 @@ Used to identify the class type."
                                     :hex-string raw-transaction)))))
   (create-transaction  [bk from-account-id amount to-account-id params]
     (try
-      (btc/sendfrom :config rpc-config
-                    :fromaccount from-account-id
-                    :amount amount
-                    :tobitcoinaddress (or
-                                       (:to-address params)
-                                       (first (get-address bk to-account-id))) 
-                    :comment (:comment params)
-                    :commentto (:comment-to params))
+      (let [response (btc/sendfrom :config rpc-config
+                           :fromaccount from-account-id
+                           :amount amount
+                           :tobitcoinaddress (or
+                                              (:to-address params)
+                                              (first (get-address bk to-account-id))) 
+                           :comment (:comment params)
+                           :commentto (:comment-to params))]
+        (if (get response "code")
+          (f/fail (get response "message"))))
       (catch java.lang.AssertionError e 
         (f/fail "No transaction possible. The recipient is uknown."))))
 
