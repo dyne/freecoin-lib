@@ -183,7 +183,10 @@ Used to identify the class type."
      (storage/query (:transaction-store stores-m) (add-transaction-list-params params))))
 
   (get-transaction   [bk txid]
-    (storage/query (:transaction-store stores-m) {:transaction-id txid}))
+    (let [response (storage/query (:transaction-store stores-m) {:transaction-id txid})]
+      (if (and (first response) (:amount (first response)))
+        (update (first response) :amount #(utils/long->bigdecimal %))
+        (f/fail "Not found"))))
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
