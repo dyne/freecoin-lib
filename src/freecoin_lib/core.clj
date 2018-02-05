@@ -377,17 +377,17 @@ Used to identify the class type."
   (create-transaction  [bk from-account-id amount to-account-id params]
     (try
       (let [response (btc/sendfrom :config rpc-config
-                           :fromaccount from-account-id
-                           :amount amount
-                           :tobitcoinaddress (or
-                                              (:to-address params)
-                                              (first (get-address bk to-account-id))) 
-                           :comment (:comment params)
-                           :commentto (:comment-to params))]
+                                   :fromaccount from-account-id
+                                   :amount amount
+                                   :tobitcoinaddress to-account-id
+                                   :comment (:comment params)
+                                   :commentto (:comment-to params))]
         (if (get response "code")
-          (f/fail (get response "message"))))
-      (catch java.lang.AssertionError e 
-        (f/fail "No transaction possible. The recipient is uknown."))))
+          (f/fail (get response "message"))
+          (log/spy response)))
+      (catch java.lang.AssertionError e
+        (log/error "ERROR " e)
+        (f/fail "No transaction possible. Error: " (.getMessage e)))))
 
   ;; ATTENTION: if the to-account or from-account dont exist they will be created
   (move [bk from-account-id amount to-account-id params]
