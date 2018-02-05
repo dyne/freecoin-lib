@@ -324,6 +324,11 @@ Used to identify the class type."
                                                             :accounts-atom accounts-atom
                                                             :tags-atom tags-atom}))))
 
+(defn- with-error-response [response]
+  (if (get response "code")
+    (f/fail (get response "message"))
+    response))
+
 (s/defrecord BtcRpc [label :- s/Str
                      confirmations :- {:number-confirmations s/Num
                                        :frequency-confirmations s/Num}
@@ -338,64 +343,69 @@ Used to identify the class type."
 
   (create-account [bk name]
     "Returns the address of the newely created account"
-    (btc/getnewaddress :account name :config rpc-config))  
+    (with-error-response
+      (btc/getnewaddress :account name :config rpc-config)))  
 
   (list-accounts [bk]
-    (btc/listaccounts :config rpc-config))
+    (with-error-response
+      (btc/listaccounts :config rpc-config)))
   
   (get-address [bk account-id]
-    (btc/getaddressesbyaccount :config rpc-config
-                               :account account-id))
+    (with-error-response
+      (btc/getaddressesbyaccount :config rpc-config
+                                 :account account-id)))
 
   (get-balance [bk account-id]
     "Fot the total balance account id has to be nil"
-    (btc/getbalance :config rpc-config
-                    :account account-id))
+    (with-error-response
+      (btc/getbalance :config rpc-config
+                      :account account-id)))
 
   (get-total-balance [bk]
-    (get-balance bk nil))
+    (with-error-response
+      (get-balance bk nil)))
   
   (list-transactions [bk params]
     "Returns up to [count] most recent transactions skipping the first [from] transactions for account [account]. If [account] not provided it'll return recent transactions from all accounts."
     (let [{:keys [account-id count from]} params]
-      (btc/listtransactions :config rpc-config
-                            :account account-id
-                            :count count
-                            :from from)))
+      (with-error-response
+        (btc/listtransactions :config rpc-config
+                              :account account-id
+                              :count count
+                              :from from))))
   (get-transaction   [bk txid]
-    (let [response (btc/gettransaction :config rpc-config
-                                       :txid txid)]
+    (f/if-let-failed? [response (with-error-response (btc/gettransaction :config rpc-config
+                                                                         :txid txid))]
+      (f/fail (:message response))
       (if (get response "amount")
         response
         ;; try raw transaction
         (let [raw-transaction (btc/getrawtransaction :config rpc-config
                                                      :txid txid
-                                                     ;:verbose true
+                                        ;:verbose true
                                                      )]
           (btc/decoderawtransaction :config rpc-config
                                     :hex-string raw-transaction)))))
   (create-transaction  [bk from-account-id amount to-account-id params]
     (try
-      (let [response (btc/sendfrom :config rpc-config
-                                   :fromaccount from-account-id
-                                   :amount amount
-                                   :tobitcoinaddress to-account-id
-                                   :comment (:comment params)
-                                   :commentto (:comment-to params))]
-        (if (get response "code")
-          (f/fail (get response "message"))
-          (log/spy response)))
+      (with-error-response (btc/sendfrom :config rpc-config
+                                         :fromaccount from-account-id
+                                         :amount amount
+                                         :tobitcoinaddress to-account-id
+                                         :comment (:comment params)
+                                         :commentto (:comment-to params)))
       (catch java.lang.AssertionError e
         (log/error "ERROR " e)
         (f/fail "No transaction possible. Error: " (.getMessage e)))))
 
   ;; ATTENTION: if the to-account or from-account dont exist they will be created
   (move [bk from-account-id amount to-account-id params]
-    (btc/move :config rpc-config
-              :fromaccount from-account-id
-              :amount amount
-              :toaccount to-account-id
-              :comment (:comment params))))
+    (with-error-response
+      (btc/move :config rpc-config
+                :fromaccount from-account-id
+                :amount amount
+                :toaccount to-account-id
+                :comment (:comment params)))))
 
 (s/defn ^:always-validate new-btc-rpc
   ([currency :- s/Str
