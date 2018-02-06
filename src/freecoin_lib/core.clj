@@ -330,8 +330,6 @@ Used to identify the class type."
     response))
 
 (s/defrecord BtcRpc [label :- s/Str
-                     confirmations :- {:number-confirmations s/Num
-                                       :frequency-confirmations s/Num}
                      rpc-config :- RPCconfig]
   Blockchain
   (label [bk]
@@ -408,17 +406,12 @@ Used to identify the class type."
                 :comment (:comment params)))))
 
 (s/defn ^:always-validate new-btc-rpc
-  ([currency :- s/Str
-    confirmations :- {:number-confirmations s/Num
-                      :frequency-confirmations s/Num}]
+  ([currency :- s/Str]
    (-> (config/create-config)
        (config/rpc-config)
        (new-btc-rpc)))
-  ([currency :- s/Str
-    confirmations :- {:number-confirmations s/Num
-                      :frequency-confirmations s/Num}
+  ([currency :- s/Str 
     rpc-config-path :- s/Str]
    (let [rpc-config (btc-conf/read-local-config rpc-config-path)]
      (s/validate BtcRpc (map->BtcRpc {:label currency
-                                      :confirmations confirmations
                                       :rpc-config (dissoc rpc-config :txindex :daemon)})))))
