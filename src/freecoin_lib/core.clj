@@ -360,7 +360,7 @@ Used to identify the class type."
       (btc/getnewaddress :config rpc-config)))
 
   (get-balance [bk account-id]
-    "Fot the total balance account id has to be nil"
+    "For the total balance account id has to be nil"
     (with-error-response
       (btc/getbalance :config rpc-config
                       :account account-id)))
