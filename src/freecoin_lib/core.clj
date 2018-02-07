@@ -56,6 +56,7 @@
   (list-accounts [bk])
 
   (get-address [bk account-id])
+  (create-address [bk])
   (get-balance [bk account-id])
   (get-total-balance [bk])
 
@@ -352,6 +353,11 @@ Used to identify the class type."
     (with-error-response
       (btc/getaddressesbyaccount :config rpc-config
                                  :account account-id)))
+
+  (create-address [bk]
+    (with-error-response
+      ;; TODO: do we need to specify account too?
+      (btc/getnewaddress :config rpc-config)))
 
   (get-balance [bk account-id]
     "Fot the total balance account id has to be nil"
