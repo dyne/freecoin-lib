@@ -399,7 +399,7 @@ Used to identify the class type."
                                          :amount amount
                                          :tobitcoinaddress to-account-id
                                          :comment (:comment params)
-                                         :commentto (:comment-to params)))
+                                         :commentto (:commentto params)))
       (catch java.lang.AssertionError e
         (log/error "ERROR " e)
         (f/fail "No transaction possible. Error: " (.getMessage e)))))
