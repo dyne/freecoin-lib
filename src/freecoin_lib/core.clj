@@ -373,7 +373,7 @@ Used to identify the class type."
     "Returns up to [count] most recent transactions skipping the first [from] transactions for account [account]. If [account] not provided it'll return recent transactions from all accounts. When parameter :received-by-address is present the rest of the options will be ignored and a call to getreceivedbyaddress will be done for the particular address."
     (let [{:keys [account-id count from received-by-address]} params]
       (with-error-response
-        (if (log/spy received-by-address)
+        (if received-by-address
           (btc/listreceivedbyaddress :config rpc-config)
           (btc/listtransactions :config rpc-config
                                 :account account-id
