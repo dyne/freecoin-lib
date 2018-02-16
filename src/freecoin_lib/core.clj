@@ -420,6 +420,7 @@ Used to identify the class type."
        (new-btc-rpc)))
   ([currency :- s/Str 
     rpc-config-path :- s/Str]
-   (let [rpc-config (btc-conf/read-local-config rpc-config-path)]
+   (f/if-let-ok? [rpc-config (f/try* (btc-conf/read-local-config rpc-config-path))] 
      (s/validate BtcRpc (map->BtcRpc {:label currency
-                                      :rpc-config (dissoc rpc-config :txindex :daemon)})))))
+                                      :rpc-config (dissoc rpc-config :txindex :daemon)}))
+     (f/fail (str "The blockchain configuration could not be loaded from " rpc-config-path)))))
