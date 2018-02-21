@@ -3,7 +3,9 @@
 
 [![software by Dyne.org](https://www.dyne.org/wp-content/uploads/2015/12/software_by_dyne.png)](http://www.dyne.org)
 
-Freecoin is a toolkit to build participatory budget management wallets on top of multiple crypto-currency backends. It is open source and written in Clojure. Freecoin's main use-case is that of developing "social wallets" where balances and transactions are trasparent to entire groups of people to help participatory budgeting activities and organisational awareness.
+The freecoin lib is the basic component of the social wallet toolkit. It contains implementations to an interface based on blockchain interactions. It is backed up by mongoDB and it contains one to one interactions, higher level interactions and metadata.
+
+Social wallet is a toolkit to build participatory budget management wallets on top of multiple crypto-currency backends. It is open source and written in Clojure. Freecoin's main use-case is that of developing "social wallets" where balances and transactions are trasparent to entire groups of people to help participatory budgeting activities and organisational awareness.
 
 [![Clojars Project](https://clojars.org/org.clojars.dyne/freecoin-lib/latest-version.svg)](https://clojars.org/org.clojars.dyne/freecoin-lib)
 

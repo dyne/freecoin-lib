@@ -56,6 +56,7 @@
   (list-accounts [bk])
 
   (get-address [bk account-id])
+  (create-address [bk])
   (get-balance [bk account-id])
   (get-total-balance [bk])
 
@@ -145,7 +146,7 @@ Used to identify the class type."
 (s/defrecord Mongo [stores-m :- StoresMap]
   Blockchain
   (label [bk]
-    (keyword (recname bk)))
+    (recname bk))
 
   (import-account [bk account-id secret]
     nil)
@@ -183,13 +184,16 @@ Used to identify the class type."
      (storage/query (:transaction-store stores-m) (add-transaction-list-params params))))
 
   (get-transaction   [bk txid]
-    (storage/query (:transaction-store stores-m) {:transaction-id txid}))
+    (let [response (storage/query (:transaction-store stores-m) {:transaction-id txid})]
+      (if (and (first response) (:amount (first response)))
+        (update (first response) :amount #(utils/long->bigdecimal %))
+        (f/fail "Not found"))))
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
     (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
           tags (or (:tags params) [])
-          transaction-id (:transaction-id params) 
+          transaction-id (or (:transaction-id params) (fxc/generate 32))
           transaction {:_id (str timestamp "-" from-account-id)
                        :currency (or (:currency params) "MONGO")
                        :timestamp timestamp
@@ -208,7 +212,9 @@ Used to identify the class type."
                   tags))
       ;; TODO: Keep track of accounts to verify validity of from- and
       ;; to- accounts
-      (storage/store! (:transaction-store stores-m) :_id transaction)
+      (-> (storage/store! (:transaction-store stores-m) :_id transaction)
+          ;; Back to bigdecimals for the sake of representation
+          (update :amount #(utils/long->bigdecimal %)))
       ))
 
   (update-transaction [bk txid fn]
@@ -319,9 +325,12 @@ Used to identify the class type."
                                                             :accounts-atom accounts-atom
                                                             :tags-atom tags-atom}))))
 
+(defn- with-error-response [response]
+  (if (get response "code")
+    (f/fail (get response "message"))
+    response))
+
 (s/defrecord BtcRpc [label :- s/Str
-                     confirmations :- {:number-confirmations s/Num
-                                       :frequency-confirmations s/Num}
                      rpc-config :- RPCconfig]
   Blockchain
   (label [bk]
@@ -333,66 +342,85 @@ Used to identify the class type."
 
   (create-account [bk name]
     "Returns the address of the newely created account"
-    (btc/getnewaddress :account name :config rpc-config))  
+    (with-error-response
+      (btc/getnewaddress :account name :config rpc-config)))  
 
   (list-accounts [bk]
-    (btc/listaccounts :config rpc-config))
+    (with-error-response
+      (btc/listaccounts :config rpc-config)))
   
   (get-address [bk account-id]
-    (btc/getaddressesbyaccount :config rpc-config
-                               :account account-id))
+    (with-error-response
+      (btc/getaddressesbyaccount :config rpc-config
+                                 :account account-id)))
+
+  (create-address [bk]
+    (with-error-response
+      ;; TODO: do we need to specify account too?
+      (btc/getnewaddress :config rpc-config)))
 
   (get-balance [bk account-id]
-    "Fot the total balance account id has to be nil"
-    (btc/getbalance :config rpc-config
-                    :account account-id))
+    "For the total balance account id has to be nil"
+    (with-error-response
+      (btc/getbalance :config rpc-config
+                      :account account-id)))
 
   (get-total-balance [bk]
-    (get-balance bk nil))
+    (with-error-response
+      (get-balance bk nil)))
   
   (list-transactions [bk params]
-    "Returns up to [count] most recent transactions skipping the first [from] transactions for account [account]. If [account] not provided it'll return recent transactions from all accounts."
-    (let [{:keys [account-id count from]} params]
-      (btc/listtransactions :config rpc-config
-                            :account account-id
-                            :count count
-                            :from from)))
+    "Returns up to [count] most recent transactions skipping the first [from] transactions for account [account]. If [account] not provided it'll return recent transactions from all accounts. When parameter :received-by-address is present the rest of the options will be ignored and a call to getreceivedbyaddress will be done for the particular address."
+    (let [{:keys [account-id count from received-by-address]} params]
+      (with-error-response
+        (if received-by-address
+          (btc/listreceivedbyaddress :config rpc-config)
+          (btc/listtransactions :config rpc-config
+                                :account account-id
+                                :count count
+                                :from from)))))
   (get-transaction   [bk txid]
-    (btc/gettransaction :config rpc-config
-                        :txid txid))
+    (f/if-let-failed? [response (with-error-response (btc/gettransaction :config rpc-config
+                                                                         :txid txid))]
+      (f/fail (:message response))
+      (if (get response "amount")
+        response
+        ;; try raw transaction
+        (let [raw-transaction (btc/getrawtransaction :config rpc-config
+                                                     :txid txid
+                                        ;:verbose true
+                                                     )]
+          (btc/decoderawtransaction :config rpc-config
+                                    :hex-string raw-transaction)))))
   (create-transaction  [bk from-account-id amount to-account-id params]
     (try
-      (btc/sendfrom :config rpc-config
-                    :fromaccount from-account-id
-                    :amount amount
-                    :tobitcoinaddress (or
-                                       (:to-address params)
-                                       (first (get-address bk to-account-id))) 
-                    :comment (:comment params)
-                    :commentto (:comment-to params))
-      (catch java.lang.AssertionError e 
-        (f/fail "No transaction possible. The recipient is uknown."))))
+      (with-error-response (btc/sendfrom :config rpc-config
+                                         :fromaccount from-account-id
+                                         :amount amount
+                                         :tobitcoinaddress to-account-id
+                                         :comment (:comment params)
+                                         :commentto (:commentto params)))
+      (catch java.lang.AssertionError e
+        (log/error "ERROR " e)
+        (f/fail "No transaction possible. Error: " (.getMessage e)))))
 
   ;; ATTENTION: if the to-account or from-account dont exist they will be created
   (move [bk from-account-id amount to-account-id params]
-    (btc/move :config rpc-config
-              :fromaccount from-account-id
-              :amount amount
-              :toaccount to-account-id
-              :comment (:comment params))))
+    (with-error-response
+      (btc/move :config rpc-config
+                :fromaccount from-account-id
+                :amount amount
+                :toaccount to-account-id
+                :comment (:comment params)))))
 
 (s/defn ^:always-validate new-btc-rpc
-  ([currency :- s/Str
-    confirmations :- {:number-confirmations s/Num
-                      :frequency-confirmations s/Num}]
+  ([currency :- s/Str]
    (-> (config/create-config)
        (config/rpc-config)
        (new-btc-rpc)))
-  ([currency :- s/Str
-    confirmations :- {:number-confirmations s/Num
-                      :frequency-confirmations s/Num}
+  ([currency :- s/Str 
     rpc-config-path :- s/Str]
-   (let [rpc-config (btc-conf/read-local-config rpc-config-path)]
+   (f/if-let-ok? [rpc-config (f/try* (btc-conf/read-local-config rpc-config-path))] 
      (s/validate BtcRpc (map->BtcRpc {:label currency
-                                      :confirmations confirmations
-                                      :rpc-config (dissoc rpc-config :txindex :daemon)})))))
+                                      :rpc-config (dissoc rpc-config :txindex :daemon)}))
+     (f/fail (str "The blockchain configuration could not be loaded from " rpc-config-path)))))
