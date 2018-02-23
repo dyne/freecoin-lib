@@ -358,7 +358,7 @@ Used to identify the class type."
     (with-error-response
       ;; TODO: do we need to specify account too?
       (btc/getnewaddress :config rpc-config
-                         :account-id (or account-id ""))))
+                         :account (or account-id ""))))
 
   (get-balance [bk account-id]
     "For the total balance account id has to be nil"
