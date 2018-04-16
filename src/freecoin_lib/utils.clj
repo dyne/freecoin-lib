@@ -21,7 +21,9 @@
 ;; You should have received a copy of the GNU Affero General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(ns freecoin-lib.utils)
+(ns freecoin-lib.utils
+  (:require [failjure.core :as f]
+            [taoensso.timbre :as log]))
 
 (declare log!)
 
@@ -62,12 +64,53 @@
     (dolog n t d)))
 
 ;; The reason for those two functions is that Mongo is using fixed decimals and there might be loss of presicion https://stackoverflow.com/questions/27967460/lift-store-bigdecimal-in-mongodb
-(defn bigdecimal->long
+;; UPDATE: Not the case anymore: https://jira.mongodb.org/browse/SERVER-1393
+(defn ^:deprecated bigdecimal->long
   "Convert from BigDecimal to long for storage into mongo"
   [bd]
   (.longValue (* bd 100000)))
 
-(defn long->bigdecimal
+(defn ^:deprecated long->bigdecimal
   "Convert from long to BigDecimal for retrievals from mongo"
   [l]
   (/ (BigDecimal. l) 100000))
+
+;;--------------- Validations for input amounts
+
+(defn- string-input? [amount]
+  (f/if-let-ok? (string? amount)
+    amount
+    (f/fail "The input should be a string.")))
+
+(defn- parsed-big-decimal? [amount]
+  (f/if-let-ok? [parsed-amount (f/try* (BigDecimal. amount))]
+    parsed-amount
+    (f/fail "The amount is not valid.")))
+
+(defn- big-decimal? [amount]
+  (if (instance? java.math.BigDecimal amount)
+    amount
+    (f/fail "Amount is not of the right type.")))
+
+(defn- positive-value? [amount]
+  (if (> amount 0)
+    amount
+    (f/fail "Negative values not allowed.")))
+
+(defn validate-input-amount [amount]
+  (f/attempt-all [string-amount (string-input? amount)
+                  big-dec-amount (parsed-big-decimal? string-amount)
+                  positive-amount (positive-value? big-dec-amount)]
+                 positive-amount
+                 (f/when-failed [e]
+                   (log/warn "Attempt to insert amount " amount)
+                   (f/fail (f/message e)))))
+
+(defn validate-big-decimal-amount [amount]
+  (f/attempt-all [big-dec-amount (big-decimal? amount)
+                  positive-amount (positive-value? big-dec-amount)]
+                 positive-amount
+                 (f/when-failed [e]
+                   (log/warn "Attempt to create amount " amount)
+                   (f/fail (f/message e)))))
+

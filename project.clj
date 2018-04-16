@@ -1,4 +1,4 @@
-(defproject org.clojars.dyne/freecoin-lib "0.9.2"  
+(defproject org.clojars.dyne/freecoin-lib "0.9.3-SNAPSHOT"  
   :description "Freecoin digital currency toolkit"
   :url "https://freecoin.dyne.org"
 
