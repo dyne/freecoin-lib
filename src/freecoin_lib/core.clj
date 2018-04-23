@@ -116,7 +116,7 @@ Used to identify the class type."
   (reverse
    (sort-by :timestamp
             (map (fn [{:keys [amount] :as transaction}]
-                   (assoc transaction :amount (utils/long->bigdecimal amount)))
+                   (assoc transaction :amount amount))
                  list))))
 
 (defn merge-params [params f name updater]
@@ -176,7 +176,7 @@ Used to identify the class type."
                                                           :total {"$sum" "$amount"}}}]))
           received (if received-map (:total received-map) 0)
           sent     (if sent-map (:total sent-map) 0)]
-      (utils/long->bigdecimal (- received sent))))
+      (- received sent)))
 
   (list-transactions [bk params]
     (log/debug "getting transactions" params)
@@ -186,12 +186,12 @@ Used to identify the class type."
   (get-transaction   [bk txid]
     (let [response (storage/query (:transaction-store stores-m) {:transaction-id txid})]
       (if (and (first response) (:amount (first response)))
-        (update (first response) :amount #(utils/long->bigdecimal %))
+        (first response)
         (f/fail "Not found"))))
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
-    (f/if-let-ok? [validated-amount (log/spy (utils/validate-big-decimal-amount amount))]
+    (f/if-let-ok? [validated-amount (utils/validate-big-decimal-amount amount)]
       (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
             tags (or (:tags params) [])
             transaction-id (or (:transaction-id params) (fxc/generate 32))
@@ -201,8 +201,8 @@ Used to identify the class type."
                          :from-id from-account-id
                          :to-id to-account-id
                          :tags tags
-                         :amount (log/spy (.doubleValue amount))
-                         :amount-text (log/spy (str validated-amount))
+                         :amount (.doubleValue validated-amount)
+                         :amount-text (.toString validated-amount)
                          :transaction-id transaction-id}]
         ;; TODO: Maybe better to do a batch insert with
         ;; monger.collection/insert-batch? More efficient for a large
@@ -214,7 +214,7 @@ Used to identify the class type."
                     tags))
         ;; TODO: Keep track of accounts to verify validity of from- and
         ;; to- accounts
-        (log/spy (storage/store! (:transaction-store stores-m) :_id (log/spy transaction))))
+        (storage/store! (:transaction-store stores-m) :_id transaction))
       (f/when-failed [e]
         (f/fail (f/message e)))))
 
