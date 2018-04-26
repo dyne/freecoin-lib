@@ -23,7 +23,9 @@
 
 (ns freecoin-lib.utils
   (:require [failjure.core :as f]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log])
+  (:import  org.bson.types.ObjectId
+            [org.bson.types Decimal128]))
 
 (declare log!)
 
@@ -82,33 +84,33 @@
     amount
     (f/fail "The input should be a string.")))
 
-(defn- parsed-big-decimal? [amount]
-  (f/if-let-ok? [parsed-amount (f/try* (BigDecimal. amount))]
+(defn- parsed-dec128? [amount]
+  (f/if-let-ok? [parsed-amount (f/try* (Decimal128/parse amount))]
     parsed-amount
     (f/fail "The amount is not valid.")))
 
-(defn- big-decimal? [amount]
-  (if (instance? java.math.BigDecimal amount)
+(defn- decimal128? [amount]
+  (if (instance? org.bson.types.Decimal128 amount)
     amount
     (f/fail "Amount is not of the right type.")))
 
 (defn- positive-value? [amount]
-  (if (> amount 0)
-    amount
-    (f/fail "Negative values not allowed.")))
+  (if (.isNegative amount)
+    (f/fail "Negative values not allowed.")
+    amount))
 
 (defn validate-input-amount [amount]
   (f/attempt-all [string-amount (string-input? amount)
-                  big-dec-amount (parsed-big-decimal? string-amount)
-                  positive-amount (positive-value? big-dec-amount)]
+                  dec128-amount (parsed-dec128? string-amount)
+                  positive-amount (positive-value? dec128-amount)]
                  positive-amount
                  (f/when-failed [e]
                    (log/warn "Attempt to insert amount " amount)
                    (f/fail (f/message e)))))
 
 (defn validate-big-decimal-amount [amount]
-  (f/attempt-all [big-dec-amount (big-decimal? amount)
-                  positive-amount (positive-value? big-dec-amount)]
+  (f/attempt-all [dec128-amount (decimal128? amount)
+                  positive-amount (positive-value? dec128-amount)]
                  positive-amount
                  (f/when-failed [e]
                    (log/warn "Attempt to create amount " amount)

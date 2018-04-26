@@ -44,7 +44,8 @@
             [clj-btc
              [core :as btc]
              [config :as btc-conf]]
-            [failjure.core :as f]))
+            [failjure.core :as f]
+            [monger.conversion :refer [from-db-object]]))
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -201,7 +202,7 @@ Used to identify the class type."
                          :from-id from-account-id
                          :to-id to-account-id
                          :tags tags
-                         :amount (.doubleValue validated-amount)
+                         :amount validated-amount
                          :amount-text (.toString validated-amount)
                          :transaction-id transaction-id}]
         ;; TODO: Maybe better to do a batch insert with
@@ -214,7 +215,10 @@ Used to identify the class type."
                     tags))
         ;; TODO: Keep track of accounts to verify validity of from- and
         ;; to- accounts
-        (storage/store! (:transaction-store stores-m) :_id transaction))
+        (->
+         (:transaction-store stores-m)
+         (storage/store! :_id transaction)
+         (update :amount #(from-db-object % true))))
       (f/when-failed [e]
         (f/fail (f/message e)))))
 
