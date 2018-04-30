@@ -115,10 +115,7 @@ Used to identify the class type."
 
 (defn- normalize-transactions [list]
   (reverse
-   (sort-by :timestamp
-            (map (fn [{:keys [amount] :as transaction}]
-                   (assoc transaction :amount amount))
-                 list))))
+   (sort-by :timestamp list)))
 
 (defn merge-params [params f name updater]
   (if-let [request-value (params name)]
@@ -234,12 +231,11 @@ Used to identify the class type."
                                               :count {"$sum" 1}
                                               :amount {"$sum" "$amount"}}}])
           tags (storage/aggregate (:transaction-store stores-m)  params)]
-      (mapv (fn [{:keys [_id count amount amount-text]}]
+      (mapv (fn [{:keys [_id count amount]}]
               (let [tag (tag/fetch (:tag-store stores-m) _id)]
                 {:tag   _id
                  :count count
                  :amount amount
-                 :amount-text amount-text
                  :created-by (:created-by tag)
                  :created (:created tag)}))
             tags)))
