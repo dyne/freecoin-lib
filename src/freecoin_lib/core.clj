@@ -192,7 +192,7 @@ Used to identify the class type."
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
-    (f/if-let-ok? [validated-amount (utils/validate-big-decimal-amount amount)]
+    (f/if-let-ok? [parsed-amount (utils/validate-input-amount amount)]
       (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
             tags (or (:tags params) [])
             transaction-id (or (:transaction-id params) (fxc/generate 32))
@@ -202,8 +202,8 @@ Used to identify the class type."
                          :from-id from-account-id
                          :to-id to-account-id
                          :tags tags
-                         :amount validated-amount
-                         :amount-text (.toString validated-amount)
+                         :amount parsed-amount
+                         :amount-text amount
                          :transaction-id transaction-id}]
         ;; TODO: Maybe better to do a batch insert with
         ;; monger.collection/insert-batch? More efficient for a large
@@ -219,8 +219,8 @@ Used to identify the class type."
          (:transaction-store stores-m)
          (storage/store! :_id transaction)
          (update :amount #(from-db-object % true))))
-      (f/when-failed [e]
-        (f/fail (f/message e)))))
+      ;; In this case it is a failure
+      parsed-amount))
 
   (update-transaction [bk txid fn]
     (storage/update! (:transaction-store stores-m) {:transaction-id txid} fn))

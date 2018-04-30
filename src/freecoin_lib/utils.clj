@@ -105,14 +105,6 @@
                   positive-amount (positive-value? dec128-amount)]
                  positive-amount
                  (f/when-failed [e]
-                   (log/warn "Attempt to insert amount " amount)
-                   (f/fail (f/message e)))))
-
-(defn validate-big-decimal-amount [amount]
-  (f/attempt-all [dec128-amount (decimal128? amount)
-                  positive-amount (positive-value? dec128-amount)]
-                 positive-amount
-                 (f/when-failed [e]
-                   (log/warn "Attempt to create amount " amount)
+                   (log/warn "The amount is not a valid number." amount)
                    (f/fail (f/message e)))))
 
