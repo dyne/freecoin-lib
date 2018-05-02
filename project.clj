@@ -1,4 +1,4 @@
-(defproject org.clojars.dyne/freecoin-lib "0.9.2"  
+(defproject org.clojars.dyne/freecoin-lib "0.9.3"  
   :description "Freecoin digital currency toolkit"
   :url "https://freecoin.dyne.org"
 
@@ -15,7 +15,7 @@
                  [clojure-humanize "0.2.2"]
 
                  ;; storage
-                 [org.clojars.dyne/clj-storage "0.5.0"]
+                 [org.clojars.dyne/clj-storage "0.5.1"]
 
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]
@@ -30,7 +30,10 @@
                  [clj-btc "0.11.2"]
 
                  ;; error handling
-                 [failjure "1.2.0"]]
+                 [failjure "1.2.0"]
+
+                 ;; Use mongo bson data types like Decimal128
+                 [org.mongodb/mongodb-driver "3.6.0-beta2"]]
 
   :source-paths ["src"]
   :resource-paths ["resources" "test-resources"]

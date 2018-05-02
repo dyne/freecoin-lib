@@ -44,7 +44,8 @@
             [clj-btc
              [core :as btc]
              [config :as btc-conf]]
-            [failjure.core :as f]))
+            [failjure.core :as f]
+            [monger.conversion :refer [from-db-object]]))
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -114,10 +115,7 @@ Used to identify the class type."
 
 (defn- normalize-transactions [list]
   (reverse
-   (sort-by :timestamp
-            (map (fn [{:keys [amount] :as transaction}]
-                   (assoc transaction :amount (utils/long->bigdecimal amount)))
-                 list))))
+   (sort-by :timestamp list)))
 
 (defn merge-params [params f name updater]
   (if-let [request-value (params name)]
@@ -176,7 +174,7 @@ Used to identify the class type."
                                                           :total {"$sum" "$amount"}}}]))
           received (if received-map (:total received-map) 0)
           sent     (if sent-map (:total sent-map) 0)]
-      (utils/long->bigdecimal (- received sent))))
+      (- received sent)))
 
   (list-transactions [bk params]
     (log/debug "getting transactions" params)
@@ -186,36 +184,40 @@ Used to identify the class type."
   (get-transaction   [bk txid]
     (let [response (storage/query (:transaction-store stores-m) {:transaction-id txid})]
       (if (and (first response) (:amount (first response)))
-        (update (first response) :amount #(utils/long->bigdecimal %))
+        (first response)
         (f/fail "Not found"))))
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
-    (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
-          tags (or (:tags params) [])
-          transaction-id (or (:transaction-id params) (fxc/generate 32))
-          transaction {:_id (str timestamp "-" from-account-id)
-                       :currency (or (:currency params) "MONGO")
-                       :timestamp timestamp
-                       :from-id from-account-id
-                       :to-id to-account-id
-                       :tags tags
-                       :amount (utils/bigdecimal->long amount)
-                       :transaction-id transaction-id}]
-      ;; TODO: Maybe better to do a batch insert with
-      ;; monger.collection/insert-batch? More efficient for a large
-      ;; amount of inserts
-      (doall (map #(tag/create-tag! {:tag-store (:tag-store stores-m) 
-                                     :tag %
-                                     :created-by from-account-id
-                                     :created timestamp})
-                  tags))
-      ;; TODO: Keep track of accounts to verify validity of from- and
-      ;; to- accounts
-      (-> (storage/store! (:transaction-store stores-m) :_id transaction)
-          ;; Back to bigdecimals for the sake of representation
-          (update :amount #(utils/long->bigdecimal %)))
-      ))
+    (f/if-let-ok? [parsed-amount (utils/validate-input-amount amount)]
+      (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
+            tags (or (:tags params) [])
+            transaction-id (or (:transaction-id params) (fxc/generate 32))
+            transaction {:_id (str timestamp "-" from-account-id)
+                         :currency (or (:currency params) "MONGO")
+                         :timestamp timestamp
+                         :from-id from-account-id
+                         :to-id to-account-id
+                         :tags tags
+                         :amount parsed-amount
+                         :amount-text amount
+                         :transaction-id transaction-id}]
+        ;; TODO: Maybe better to do a batch insert with
+        ;; monger.collection/insert-batch? More efficient for a large
+        ;; amount of inserts
+        (doall (map #(tag/create-tag! {:tag-store (:tag-store stores-m) 
+                                       :tag %
+                                       :created-by from-account-id
+                                       :created timestamp})
+                    tags))
+        ;; TODO: Keep track of accounts to verify validity of from- and
+        ;; to- accounts
+        (->
+         (:transaction-store stores-m)
+         (storage/store! :_id transaction)
+         (update :amount #(from-db-object % true))))
+      ;; In this case it is a failure
+      parsed-amount))
 
   (update-transaction [bk txid fn]
     (storage/update! (:transaction-store stores-m) {:transaction-id txid} fn))
@@ -233,7 +235,7 @@ Used to identify the class type."
               (let [tag (tag/fetch (:tag-store stores-m) _id)]
                 {:tag   _id
                  :count count
-                 :amount (utils/long->bigdecimal amount)
+                 :amount amount
                  :created-by (:created-by tag)
                  :created (:created tag)}))
             tags)))
