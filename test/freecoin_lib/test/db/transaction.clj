@@ -42,24 +42,24 @@
                                                                      :to-id "B"
                                                                      :currency "mongo"
                                                                      ;; TODO add tags and test them
-                                                                     :amount (utils/bigdecimal->long 1)})
+                                                                     :amount 1})
 
                              (storage/store! transaction-store :id_ {:from-id "A"
                                                                      :to-id "C"
                                                                      :currency "mongo"
                                                                      ;; TODO add tags and test them
-                                                                     :amount (utils/bigdecimal->long 2)})
+                                                                     :amount 2})
 
                              (storage/store! transaction-store :id_ {:from-id "B"
                                                                      :to-id "C"
                                                                      :currency "mongo"
                                                                      ;; TODO add tags and test them
-                                                                     :amount (utils/bigdecimal->long 2)})
+                                                                     :amount 2})
                              (storage/store! transaction-store :id_ {:from-id "C"
                                                                      :to-id "A"
                                                                      :currency "faircoin"
                                                                      ;; TODO add tags and test them
-                                                                     :amount (utils/bigdecimal->long 20)})
+                                                                     :amount 20})
                              
                              (fact "The budget per account is correct"
                                    (let [mongo-bc (blockchain/new-mongo stores-m)]

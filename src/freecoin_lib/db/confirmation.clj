@@ -36,15 +36,13 @@
                        :type :transaction
                        :data {:sender-email sender-email
                               :recipient-email recipient-email
-                              :amount (util/bigdecimal->long amount)
+                              :amount amount
                               :tags tags}}
-         stored (some-> (storage/store! confirmation-store :uid confirmation)
-                        (update-in [:data :amount] util/long->bigdecimal))]
+         stored (some-> (storage/store! confirmation-store :uid confirmation))]
      stored)))
 
 (defn fetch [confirmation-store email]
-  (some-> (storage/fetch confirmation-store email)
-          (update-in [:data :amount] util/long->bigdecimal)))
+  (some-> (storage/fetch confirmation-store email)))
 
 (defn delete! [confirmation-store email]
   (storage/delete! confirmation-store email))
