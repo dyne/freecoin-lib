@@ -1,7 +1,7 @@
 (defproject org.clojars.dyne/freecoin-lib "0.10.0-SNAPSHOT"  
   :description "Freecoin digital currency toolkit"
   :url "https://freecoin.dyne.org"
-
+  
   :license {:author "Dyne.org Foundation"
             :email "foundation@dyne.org"
             :year 2017
