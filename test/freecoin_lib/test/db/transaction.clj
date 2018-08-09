@@ -57,12 +57,31 @@
                                                                      :amount 2})
                              (storage/store! transaction-store :id_ {:from-id "C"
                                                                      :to-id "A"
-                                                                     :currency "faircoin"
+                                                                     :currency "FAIR"
                                                                      ;; TODO add tags and test them
                                                                      :amount 20})
+                             (storage/store! transaction-store :id_ {:from-id "A"
+                                                                     :to-id "C"
+                                                                     :currency "mongo"
+                                             
+                                                                     :amount 50})
                              
                              (fact "The budget per account is correct"
                                    (let [mongo-bc (blockchain/new-mongo stores-m)]
-                                     (blockchain/get-balance mongo-bc "A") => 17M
+                                     (blockchain/get-balance mongo-bc "A") => -33M
                                      (blockchain/get-balance mongo-bc "B") => -1M
-                                     (blockchain/get-balance mongo-bc "C") => -16M)))))
+                                     (blockchain/get-balance mongo-bc "C") => 34M
+
+                                     (fact "Retrieving transactions with and without paging works"
+                                           (count (blockchain/list-transactions mongo-bc {})) => 5
+                                           (count (blockchain/list-transactions mongo-bc {:currency "mongo" :account-id "A"})) => 3
+                                           ;; count doesnt do anything for Mongo
+                                           (count (blockchain/list-transactions mongo-bc {:count 1})) => 5
+                                           (count (blockchain/list-transactions mongo-bc {:page 0 :per-page 2})) => 2
+                                           (count (blockchain/list-transactions mongo-bc {:page 1 :per-page 2})) => 2
+                                           (count (blockchain/list-transactions mongo-bc {:page 3 :per-page 2})) => 1
+                                           (count (blockchain/list-transactions mongo-bc {:page 4 :per-page 2})) => 0
+                                           ;; Passing the paging limit throws an error
+                                           (:message (blockchain/list-transactions mongo-bc {:page 0 :per-page 200})) => "Cannot request more than 100 transactions."
+                                           ;; Defualts to 10 per-page
+                                           (count (blockchain/list-transactions mongo-bc {:page 0})) => 5))))))
