@@ -180,21 +180,23 @@ Used to identify the class type."
 
   (list-transactions [bk {:keys [page per-page] :as params}]
     ;; TODO extract
-    (let [limit 100]
+    (let [limit 100
+          first-page 0
+          default-items 10]
       (log/debug "getting transactions" params)
-      (when (and per-page (log/spy (> (log/spy per-page) limit)))
-        (f/fail "Cannot request more than " limit " transactions.")))
-    (let [current-page (atom 1)
-          items-per-page (atom 10)]
-      (when page (reset! current-page page))
-      (when per-page (reset! items-per-page per-page)) 
-      (normalize-transactions
-       (storage/list-per-page (:transaction-store stores-m)
-                              (-> params
-                                  (dissoc :page :per-page :count :from) 
-                                  add-transaction-list-params)
-                              @current-page
-                              @items-per-page))))
+      (if (and per-page (> per-page limit))
+        (f/fail (str "Cannot request more than " limit " transactions."))
+        (let [current-page (atom first-page)
+              items-per-page (atom default-items)]
+          (when page (reset! current-page page))
+          (when per-page (reset! items-per-page per-page)) 
+          (normalize-transactions
+           (storage/list-per-page (:transaction-store stores-m)
+                                  (-> params
+                                      (dissoc :page :per-page :count :from) 
+                                      add-transaction-list-params)
+                                  @current-page
+                                  @items-per-page))))))
 
   (get-transaction   [bk txid]
     (let [response (storage/query (:transaction-store stores-m) {:transaction-id txid})]
