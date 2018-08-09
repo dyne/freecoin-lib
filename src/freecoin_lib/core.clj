@@ -132,7 +132,9 @@ Used to identify the class type."
               :account-id
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})
               :tags
-              (fn [v] {:tags {"$in" v}})}))
+              (fn [v] {:tags {"$in" v}})
+              :currency
+              (fn [v] {:currency v})}))
 
 (defn add-tags-list-params [request-params]
   (reduce-kv (partial merge-params request-params)
