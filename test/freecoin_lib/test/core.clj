@@ -7,7 +7,8 @@
             [clj-storage.db.mongo :as mongo]
             [clj-storage.core :as storage]
             [schema.core :as s]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log])
+  (:import [freecoin_lib.core BtcRpc]))
 
 (facts "Validate agaist schemas"
 
@@ -28,5 +29,5 @@
                                    (clojure.java.io/resource)
                                    (.getPath))]
                  (blockchain/new-btc-rpc "FAIR" conf-file) => truthy
-
+                 (s/validate BtcRpc (blockchain/new-btc-rpc "FAIR" conf-file)) => truthy
                  (blockchain/new-btc-rpc nil) => (throws Exception))))
