@@ -65,23 +65,40 @@
                                                                      :currency "mongo"
                                              
                                                                      :amount 50})
-                             
-                             (fact "The budget per account is correct"
-                                   (let [mongo-bc (blockchain/new-mongo stores-m)]
+
+                             (let [mongo-bc (blockchain/new-mongo stores-m)]
+                               (fact "The budget per account is correct"
                                      (blockchain/get-balance mongo-bc "A") => -33M
                                      (blockchain/get-balance mongo-bc "B") => -1M
-                                     (blockchain/get-balance mongo-bc "C") => 34M
+                                     (blockchain/get-balance mongo-bc "C") => 34M)
+                               (fact "Retrieving transactions with and without paging works"
+                                     (count (blockchain/list-transactions mongo-bc {})) => 5
+                                     (count (blockchain/list-transactions mongo-bc {:currency "mongo" :account-id "A"})) => 3
+                                     ;; count doesnt do anything for Mongo
+                                     (count (blockchain/list-transactions mongo-bc {:count 1})) => 5
 
-                                     (fact "Retrieving transactions with and without paging works"
-                                           (count (blockchain/list-transactions mongo-bc {})) => 5
-                                           (count (blockchain/list-transactions mongo-bc {:currency "mongo" :account-id "A"})) => 3
-                                           ;; count doesnt do anything for Mongo
-                                           (count (blockchain/list-transactions mongo-bc {:count 1})) => 5
-                                           (count (blockchain/list-transactions mongo-bc {:page 0 :per-page 2})) => 2
-                                           (count (blockchain/list-transactions mongo-bc {:page 1 :per-page 2})) => 2
-                                           (count (blockchain/list-transactions mongo-bc {:page 3 :per-page 2})) => 1
-                                           (count (blockchain/list-transactions mongo-bc {:page 4 :per-page 2})) => 0
-                                           ;; Passing the paging limit throws an error
-                                           (:message (blockchain/list-transactions mongo-bc {:page 0 :per-page 200})) => "Cannot request more than 100 transactions."
-                                           ;; Defualts to 10 per-page
-                                           (count (blockchain/list-transactions mongo-bc {:page 0})) => 5))))))
+                                     ;; Page 0 and 1 return the same thing i.e. the first page
+                                     (count (blockchain/list-transactions mongo-bc {:page 0 :per-page 2})) => 2
+                                     (count (blockchain/list-transactions mongo-bc {:page 1 :per-page 2})) => 2
+                                     (count (blockchain/list-transactions mongo-bc {:page 2 :per-page 2})) => 2
+                                     (count (blockchain/list-transactions mongo-bc {:page 3 :per-page 2})) => 1
+                                     (count (blockchain/list-transactions mongo-bc {:page 4 :per-page 2})) => 0
+                                     ;; Passing the paging limit throws an error
+                                     (:message (blockchain/list-transactions mongo-bc {:page 0 :per-page 200})) => "Cannot request more than 100 transactions."
+                                     ;; Defualts to 10 per-page
+                                     (count (blockchain/list-transactions mongo-bc {:page 1})) => 5
+                                     (count (blockchain/list-transactions mongo-bc {:page 2})) => 0
+                                     ;; Page 0 and 1 return the same thing i.e. the first page
+                                     (let [first-two-entries '({:amount 2 :currency "mongo" :from-id "A" :to-id "C"}
+                                                               {:amount 1 :currency "mongo" :from-id "A" :to-id "B"})
+                                           second-two-entries '({:amount 20 :currency "FAIR" :from-id "C" :to-id "A"}
+                                                                {:amount 2 :currency "mongo" :from-id "B" :to-id "C"})
+                                           last-entry '({:amount 50 :currency "mongo" :from-id "A" :to-id "C"})]
+                                       (blockchain/list-transactions mongo-bc {:page 0 :per-page 2}) => first-two-entries
+                                       (blockchain/list-transactions mongo-bc {:page 1 :per-page 2}) => first-two-entries
+                                       (blockchain/list-transactions mongo-bc {:page 2 :per-page 2}) => second-two-entries 
+                                       (blockchain/list-transactions mongo-bc {:page 3 :per-page 2}) => last-entry)
+                                     (fact "Paging works also with other criteria"
+                                           (count (blockchain/list-transactions mongo-bc { :account-id "A"})) => 4
+                                           (count (blockchain/list-transactions mongo-bc { :account-id "A" :page 1 :per-page 2})) => 2
+                                           (count (blockchain/list-transactions mongo-bc { :account-id "A" :page 3 :per-page 2})) => 0))))))
