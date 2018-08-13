@@ -67,6 +67,7 @@
   (create-transaction  [bk from-account-id amount to-account-id params])
   (update-transaction [bk txid fn])
   (move [bk from-account-id amount to-account-is params])
+  (count-transactions [bk params])
 
   ;; tags
   (list-tags     [bk params])
@@ -78,6 +79,7 @@
   (create-voucher [bk account-id amount expiration secret])
   (redeem-voucher [bk account-id voucher])
   (list-vouchers  [bk]))
+
 (defrecord voucher
     [_id
      expiration
@@ -239,6 +241,10 @@ Used to identify the class type."
   (update-transaction [bk txid fn]
     (storage/update! (:transaction-store stores-m) {:transaction-id txid} fn))
 
+  (count-transactions [bk params]
+    (log/info "DATE TRIME " (.toDateTime (:datetime (time/datetime 1970 1 1))))
+    (storage/count* (:transaction-store stores-m) params))
+  
   (list-tags [bk params]
     (let [by-tag [{:$unwind :$tags}]
           tags-params (apply conj by-tag (if (coll? params)

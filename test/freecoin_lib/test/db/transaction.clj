@@ -101,4 +101,7 @@
                                      (fact "Paging works also with other criteria"
                                            (count (blockchain/list-transactions mongo-bc { :account-id "A"})) => 4
                                            (count (blockchain/list-transactions mongo-bc { :account-id "A" :page 1 :per-page 2})) => 2
-                                           (count (blockchain/list-transactions mongo-bc { :account-id "A" :page 3 :per-page 2})) => 0))))))
+                                           (count (blockchain/list-transactions mongo-bc { :account-id "A" :page 3 :per-page 2})) => 0)
+                                     (fact "The count of transactions works properly."
+                                           (blockchain/count-transactions mongo-bc {}) => (count (storage/query transaction-store {}))
+                                           (blockchain/count-transactions mongo-bc {:currency "mongo"}) => (count (storage/query transaction-store {:currency "mongo"}))))))))
