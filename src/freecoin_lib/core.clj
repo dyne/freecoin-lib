@@ -241,8 +241,7 @@ Used to identify the class type."
   (update-transaction [bk txid fn]
     (storage/update! (:transaction-store stores-m) {:transaction-id txid} fn))
 
-  (count-transactions [bk params]
-    (log/info "DATE TRIME " (.toDateTime (:datetime (time/datetime 1970 1 1))))
+  (count-transactions [bk params] 
     (storage/count* (:transaction-store stores-m) params))
   
   (list-tags [bk params]
