@@ -67,6 +67,7 @@
   (create-transaction  [bk from-account-id amount to-account-id params])
   (update-transaction [bk txid fn])
   (move [bk from-account-id amount to-account-is params])
+  (count-transactions [bk params])
 
   ;; tags
   (list-tags     [bk params])
@@ -78,6 +79,7 @@
   (create-voucher [bk account-id amount expiration secret])
   (redeem-voucher [bk account-id voucher])
   (list-vouchers  [bk]))
+
 (defrecord voucher
     [_id
      expiration
@@ -132,7 +134,9 @@ Used to identify the class type."
               :account-id
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})
               :tags
-              (fn [v] {:tags {"$in" v}})}))
+              (fn [v] {:tags {"$in" v}})
+              :currency
+              (fn [v] {:currency v})}))
 
 (defn add-tags-list-params [request-params]
   (reduce-kv (partial merge-params request-params)
@@ -176,10 +180,25 @@ Used to identify the class type."
           sent     (if sent-map (:total sent-map) 0)]
       (- received sent)))
 
-  (list-transactions [bk params]
-    (log/debug "getting transactions" params)
-    (normalize-transactions
-     (storage/query (:transaction-store stores-m) (add-transaction-list-params params))))
+  (list-transactions [bk {:keys [page per-page] :as params}]
+    ;; TODO extract
+    (let [limit 100
+          first-page 0
+          default-items 10]
+      (log/debug "getting transactions" params)
+      (if (and per-page (> per-page limit))
+        (f/fail (str "Cannot request more than " limit " transactions."))
+        (let [current-page (atom first-page)
+              items-per-page (atom default-items)]
+          (when page (reset! current-page page))
+          (when per-page (reset! items-per-page per-page)) 
+          (normalize-transactions
+           (storage/list-per-page (:transaction-store stores-m)
+                                  (-> params
+                                      (dissoc :page :per-page :count :from) 
+                                      add-transaction-list-params)
+                                  @current-page
+                                  @items-per-page))))))
 
   (get-transaction   [bk txid]
     (let [response (storage/query (:transaction-store stores-m) {:transaction-id txid})]
@@ -222,6 +241,9 @@ Used to identify the class type."
   (update-transaction [bk txid fn]
     (storage/update! (:transaction-store stores-m) {:transaction-id txid} fn))
 
+  (count-transactions [bk params] 
+    (storage/count* (:transaction-store stores-m) params))
+  
   (list-tags [bk params]
     (let [by-tag [{:$unwind :$tags}]
           tags-params (apply conj by-tag (if (coll? params)

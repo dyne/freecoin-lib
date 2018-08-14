@@ -15,7 +15,7 @@
                  [clojure-humanize "0.2.2"]
 
                  ;; storage
-                 [org.clojars.dyne/clj-storage "0.5.1"]
+                 [org.clojars.dyne/clj-storage "0.7.0-SNAPSHOT"]
 
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]
