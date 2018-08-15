@@ -1,4 +1,4 @@
-(defproject org.clojars.dyne/freecoin-lib "0.9.5"  
+(defproject org.clojars.dyne/freecoin-lib "0.10.0"  
   :description "Freecoin digital currency toolkit"
   :url "https://freecoin.dyne.org"
   
@@ -15,7 +15,7 @@
                  [clojure-humanize "0.2.2"]
 
                  ;; storage
-                 [org.clojars.dyne/clj-storage "0.5.1"]
+                 [org.clojars.dyne/clj-storage "0.7.0"]
 
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]
