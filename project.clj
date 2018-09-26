@@ -48,4 +48,5 @@
              :dev-common {:dependencies [[midje "1.8.3"]]
                           :repl-options {:init-ns freecoin-lib.core}
                           :plugins [[lein-midje "3.1.3"]]}}
+  :aliases {"test"  ["midje"]}
   :plugins [[lein-environ "1.0.0"]])
