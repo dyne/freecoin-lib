@@ -27,7 +27,7 @@
                  [prismatic/schema "1.1.9"]
 
                  ;; Bitcoin lib
-                 [clj-btc "0.11.2"]
+                 [clj-frc "0.1.2"]
 
                  ;; error handling
                  [failjure "1.3.0"]
