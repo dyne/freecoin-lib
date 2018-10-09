@@ -66,7 +66,7 @@
                                              
                                                                      :amount 50})
 
-                             (let [mongo-bc (blockchain/new-mongo stores-m)]
+                             (let [mongo-bc (blockchain/new-mongo "Testcoin" stores-m)]
                                (fact "The budget per account is correct"
                                      (blockchain/get-balance mongo-bc "A") => -33M
                                      (blockchain/get-balance mongo-bc "B") => -1M

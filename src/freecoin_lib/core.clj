@@ -145,10 +145,10 @@ Used to identify the class type."
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})}))
 
 ;; inherits from Blockchain and implements its methods
-(s/defrecord Mongo [stores-m :- StoresMap]
+(s/defrecord Mongo [label :- s/Str stores-m :- StoresMap]
   Blockchain
   (label [bk]
-    (recname bk))
+    label)
 
   (import-account [bk account-id secret]
     nil)
@@ -271,8 +271,8 @@ Used to identify the class type."
 
 (s/defn ^:always-validate new-mongo
   "Check that the blockchain is available, then return a record"
-  [stores-m :- StoresMap]
-  (s/validate Mongo (map->Mongo {:stores-m stores-m})))
+  [currency :- s/Str stores-m :- StoresMap]
+  (s/validate Mongo (map->Mongo {:label currency :stores-m stores-m})))
 
 (defn in-memory-filter [entry params]
   true)
