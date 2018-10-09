@@ -20,7 +20,7 @@
                  (s/validate fc/StoresMap stores-m) => truthy
 
                  ;; TODO validate TTl
-                 (blockchain/new-mongo stores-m) => truthy
+                 (blockchain/new-mongo "Testcoin" stores-m) => truthy
 
                  (blockchain/new-mongo nil) => (throws Exception)))
 
