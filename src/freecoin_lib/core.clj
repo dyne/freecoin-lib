@@ -58,7 +58,7 @@
 
   (get-address [bk account-id])
   (create-address [bk account-id])
-  (get-balance [bk account-id])
+  (get-balance [bk params])
   (get-total-balance [bk])
 
   ;; transactions
@@ -166,14 +166,16 @@ Used to identify the class type."
 
   (get-address [bk account-id] nil)
   
-  (get-balance [bk account-id]
+  (get-balance [bk {:keys [account-id currency]}]
     ;; we use the aggregate function in mongodb, sort of simplified map/reduce
     (let [received-map (first (storage/aggregate (:transaction-store stores-m) 
-                                                 [{"$match" {:to-id account-id}}
+                                                 [{"$match" {:to-id account-id
+                                                             :currency currency}}
                                                   {"$group" {:_id "$to-id"
                                                              :total {"$sum" "$amount"}}}]))
           sent-map  (first (storage/aggregate (:transaction-store stores-m)
-                                              [{"$match" {:from-id account-id}}
+                                              [{"$match" {:from-id account-id
+                                                          :currency currency}}
                                                {"$group" {:_id "$from-id"
                                                           :total {"$sum" "$amount"}}}]))
           received (if received-map (:total received-map) 0)
