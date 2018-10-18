@@ -212,6 +212,7 @@ Used to identify the class type."
       (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
             tags (or (:tags params) [])
             transaction-id (or (:transaction-id params) (fxc/generate 32))
+            description (or (:description params) "")
             transaction {:_id (str timestamp "-" from-account-id)
                          :currency (or (:currency params) "MONGO")
                          :timestamp timestamp
@@ -220,7 +221,8 @@ Used to identify the class type."
                          :tags tags
                          :amount parsed-amount
                          :amount-text amount
-                         :transaction-id transaction-id}]
+                         :transaction-id transaction-id
+                         :description description}]
         ;; TODO: Maybe better to do a batch insert with
         ;; monger.collection/insert-batch? More efficient for a large
         ;; amount of inserts
@@ -320,13 +322,15 @@ Used to identify the class type."
     ;; the 1 december 2015 plus a number of days that equals the amount
     (let [now (time/format (time/add-days (time/datetime 2015 12 1) amount))
           tags (or (:tags params) #{})
+          description (or (:description params) "")
           transaction {:transaction-id (str now "-" from-account-id)
                        :currency "INMEMORYBLOCKCHAIN"
                        :timestamp now
                        :from-id from-account-id
                        :to-id to-account-id
                        :tags tags
-                       :amount amount}]
+                       :amount amount
+                       :description description}]
 
       (doall (map #(swap! tags-atom assoc {:tag %
                                            :created-by from-account-id
@@ -419,10 +423,10 @@ Used to identify the class type."
                                     :hex-string raw-transaction)))))
   (create-transaction  [bk from-account-id amount to-account-id params]
     (try
-      (with-error-response (btc/sendfrom :config rpc-config
-                                         :fromaccount from-account-id
-                                         :amount amount
-                                         :tobitcoinaddress to-account-id
+      (with-error-response (btc/sendfrom :config (log/spy rpc-config)
+                                         :fromaccount (log/spy from-account-id)
+                                         :amount (log/spy (utils/validate-input-amount amount))
+                                         :tobitcoinaddress (log/spy to-account-id)
                                          :comment (:comment params)
                                          :commentto (:commentto params)))
       (catch java.lang.AssertionError e

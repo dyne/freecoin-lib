@@ -64,7 +64,8 @@
                                                                      :to-id "C"
                                                                      :currency "mongo"
                                              
-                                                                     :amount 50})
+                                                                     :amount 50
+                                                                     :description "something"})
 
                              (let [mongo-bc (blockchain/new-mongo "Testcoin" stores-m)]
                                (fact "The budget per account is correct"
@@ -93,7 +94,7 @@
                                                                {:amount 1 :currency "mongo" :from-id "A" :to-id "B"})
                                            second-two-entries '({:amount 20 :currency "FAIR" :from-id "C" :to-id "A"}
                                                                 {:amount 2 :currency "mongo" :from-id "B" :to-id "C"})
-                                           last-entry '({:amount 50 :currency "mongo" :from-id "A" :to-id "C"})]
+                                           last-entry '({:amount 50 :currency "mongo" :from-id "A" :to-id "C" :description "something"})]
                                        (blockchain/list-transactions mongo-bc {:page 0 :per-page 2}) => first-two-entries
                                        (blockchain/list-transactions mongo-bc {:page 1 :per-page 2}) => first-two-entries
                                        (blockchain/list-transactions mongo-bc {:page 2 :per-page 2}) => second-two-entries 
