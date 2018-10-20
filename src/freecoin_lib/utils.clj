@@ -89,20 +89,39 @@
     parsed-amount
     (f/fail "The amount is not valid.")))
 
+(defn- parsed-bigdec? [amount]
+  (f/if-let-ok? [parsed-amount (f/try* (BigDecimal. amount))]
+    parsed-amount
+    (f/fail "The amount is not valid.")))
+
 (defn- decimal128? [amount]
   (if (instance? org.bson.types.Decimal128 amount)
     amount
     (f/fail "Amount is not of the right type.")))
 
-(defn- positive-value? [amount]
+(defn- positive-Decimal128? [amount]
   (if (.isNegative amount)
     (f/fail "Negative values not allowed.")
     amount))
 
-(defn validate-input-amount [amount]
+(defn- positive-BigDecimal? [amount]
+  (if (neg? amount)
+    (f/fail "Negative values not allowed.")
+    amount))
+
+(defn string->Decimal128 [amount]
   (f/attempt-all [string-amount (string-input? amount)
                   dec128-amount (parsed-dec128? string-amount)
-                  positive-amount (positive-value? dec128-amount)]
+                  positive-amount (positive-Decimal128? dec128-amount)]
+                 positive-amount
+                 (f/when-failed [e]
+                   (log/warn "The amount is not a valid number." amount)
+                   (f/fail (f/message e)))))
+
+(defn string->BigDecimal [amount]
+  (f/attempt-all [string-amount (string-input? amount)
+                  bigdec-amount (parsed-bigdec? string-amount)
+                  positive-amount (positive-BigDecimal? bigdec-amount)]
                  positive-amount
                  (f/when-failed [e]
                    (log/warn "The amount is not a valid number." amount)

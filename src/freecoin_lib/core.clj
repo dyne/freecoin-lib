@@ -208,7 +208,7 @@ Used to identify the class type."
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
-    (f/if-let-ok? [parsed-amount (utils/validate-input-amount amount)]
+    (f/if-let-ok? [parsed-amount (utils/string->Decimal128 amount)]
       (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
             tags (or (:tags params) [])
             transaction-id (or (:transaction-id params) (fxc/generate 32))
@@ -423,15 +423,18 @@ Used to identify the class type."
                                     :hex-string raw-transaction)))))
   (create-transaction  [bk from-account-id amount to-account-id params]
     (try
-      (with-error-response (btc/sendfrom :config (log/spy rpc-config)
-                                         :fromaccount (log/spy from-account-id)
-                                         :amount (log/spy (utils/validate-input-amount amount))
-                                         :tobitcoinaddress (log/spy to-account-id)
-                                         :comment (:comment params)
-                                         :commentto (:commentto params)))
+      (with-error-response (btc/sendfrom :config rpc-config
+                                         :fromaccount from-account-id
+                                         :amount (utils/string->BigDecimal amount)
+                                         :tobitcoinaddress to-account-id
+                                         :comment (or (:comment params) "")
+                                         :commentto (or (:commentto params) "")))
       (catch java.lang.AssertionError e
         (log/error "ERROR " e)
-        (f/fail "No transaction possible. Error: " (.getMessage e)))))
+        (f/fail "No transaction possible. Error: " e))
+      (catch java.lang.Exception e
+        (log/error "Exception " e)
+        (f/fail "Transaction amount too small: " e))))
 
   ;; ATTENTION: if the to-account or from-account dont exist they will be created
   (move [bk from-account-id amount to-account-id params]
