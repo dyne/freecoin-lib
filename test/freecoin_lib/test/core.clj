@@ -7,6 +7,7 @@
             [clj-storage.db.mongo :as mongo]
             [clj-storage.core :as storage]
             [schema.core :as s]
+            [simple-time.core :as time]
             [taoensso.timbre :as log])
   (:import [freecoin_lib.core BtcRpc]))
 
@@ -31,3 +32,11 @@
                  (blockchain/new-btc-rpc "FAIR" conf-file) => truthy
                  (s/validate BtcRpc (blockchain/new-btc-rpc "FAIR" conf-file)) => truthy
                  (blockchain/new-btc-rpc nil) => (throws Exception))))
+
+(facts "Test internal functions"
+       (fact "Test the parameter composition for lib requests"
+             (blockchain/add-transaction-list-params
+              {:from (.toDate (:datetime (time/datetime 2016 11 30)))
+               :to (.toDate (:datetime (time/datetime 2016 12 2)))})
+             => {:timestamp {"$lt" (.toDate (:datetime (time/datetime 2016 12 2)))
+                             "$gte" (.toDate (:datetime (time/datetime 2016 11 30)))}}))

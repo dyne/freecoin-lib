@@ -121,7 +121,11 @@ Used to identify the class type."
 
 (defn merge-params [params f name updater]
   (if-let [request-value (params name)]
-    (merge f (updater request-value))
+    (let [resolved-param (updater request-value)
+          resolved-key (-> resolved-param first key)]
+      (if (and (keyword? resolved-key) (resolved-key f))
+        (merge-with merge f resolved-param)
+        (merge f resolved-param)))
     f))
 
 (defn add-transaction-list-params [request-params]
@@ -130,7 +134,7 @@ Used to identify the class type."
              {:to
               (fn [v] {:timestamp {"$lt" v}})
               :from
-              (fn [v] {:timestamp {"$gt" v}})
+              (fn [v] {:timestamp {"$gte" v}})
               :account-id
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})
               :tags
@@ -180,7 +184,7 @@ Used to identify the class type."
           sent     (if sent-map (:total sent-map) 0)]
       (- received sent)))
 
-  (list-transactions [bk {:keys [page per-page] :as params}]
+  (list-transactions [bk {:keys [page per-page tags from to] :as params}]
     ;; TODO extract
     (let [limit 100
           first-page 0
@@ -195,7 +199,7 @@ Used to identify the class type."
           (normalize-transactions
            (storage/list-per-page (:transaction-store stores-m)
                                   (-> params
-                                      (dissoc :page :per-page :count :from) 
+                                      (dissoc :page :per-page) 
                                       add-transaction-list-params)
                                   @current-page
                                   @items-per-page))))))
@@ -404,6 +408,9 @@ Used to identify the class type."
       (with-error-response
         (if received-by-address
           (btc/listreceivedbyaddress :config rpc-config)
+          ;; FIX: Only transactions from the local wallet command.
+          ;; Get raw transaction, get block command.
+          ;; Node is full node, operates on local wallet.
           (btc/listtransactions :config rpc-config
                                 :account account-id
                                 :count count
