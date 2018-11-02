@@ -37,7 +37,6 @@
             [freecoin-lib
              [utils :as utils]
              [config :as config]]
-            [simple-time.core :as time]
             [schema.core :as s]
             [freecoin-lib.schemas :refer [StoresMap
                                           RPCconfig]]
@@ -45,7 +44,8 @@
              [core :as btc]
              [config :as btc-conf]]
             [failjure.core :as f]
-            [monger.conversion :refer [from-db-object]]))
+            [monger.conversion :refer [from-db-object]]
+            [clj-time.core :as t]))
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -213,7 +213,9 @@ Used to identify the class type."
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
     (f/if-let-ok? [parsed-amount (utils/string->Decimal128 amount)]
-      (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
+      ;; FIXME: oh no timestamp was saved as a string
+      (let [timestamp (if-let [time (:timestamp params)] time (t/now))
+            _ (log/info "TIMESTAMP IS " (class timestamp))
             tags (or (:tags params) [])
             transaction-id (or (:transaction-id params) (fxc/generate 32))
             description (or (:description params) "")
@@ -324,7 +326,7 @@ Used to identify the class type."
   (create-transaction  [bk from-account-id amount to-account-id params]
     ;; to make tests possible the timestamp here is generated starting from
     ;; the 1 december 2015 plus a number of days that equals the amount
-    (let [now (time/format (time/add-days (time/datetime 2015 12 1) amount))
+    (let [now (t/now) 
           tags (or (:tags params) #{})
           description (or (:description params) "")
           transaction {:transaction-id (str now "-" from-account-id)

@@ -31,7 +31,9 @@
              [core :as blockchain]]
             [freecoin-lib.db.freecoin :as freecoin]
             [taoensso.timbre :as log]
-            [simple-time.core :as time]))
+            [clj-time.core :as t]
+            monger.joda-time
+            monger.json))
 
 (against-background [(before :contents (test-db/setup-db))
                      (after :contents (test-db/teardown-db))]
@@ -44,34 +46,34 @@
                                                                      :currency "mongo"
                                                                      ;; TODO add tags and test them
                                                                      :amount 1
-                                                                     :timestamp (.toDate (:datetime (time/datetime 2017 12 1)))})
+                                                                     :timestamp (t/date-time 2017 12 1)})
 
                              (storage/store! transaction-store :id_ {:from-id "A"
                                                                      :to-id "C"
                                                                      :currency "mongo"
                                                                      ;; TODO add tags and test them
                                                                      :amount 2
-                                                                     :timestamp (.toDate (:datetime (time/datetime 2017 12 1)))})
+                                                                     :timestamp (t/date-time 2017 12 1)})
 
                              (storage/store! transaction-store :id_ {:from-id "B"
                                                                      :to-id "C"
                                                                      :currency "mongo"
                                                                      ;; TODO add tags and test them
                                                                      :amount 2
-                                                                     :timestamp (.toDate (:datetime (time/datetime 2016 12 1)))})
+                                                                     :timestamp (t/date-time 2016 12 1)})
                              (storage/store! transaction-store :id_ {:from-id "C"
                                                                      :to-id "A"
                                                                      :currency "FAIR"
                                                                      ;; TODO add tags and test them
                                                                      :amount 20
-                                                                     :timestamp (.toDate (:datetime (time/datetime 2016 12 1)))})
+                                                                     :timestamp (t/date-time 2016 12 1)})
                              (storage/store! transaction-store :id_ {:from-id "A"
                                                                      :to-id "C"
                                                                      :currency "mongo"
                                              
                                                                      :amount 50
                                                                      :description "something"
-                                                                     :timestamp (.toDate (:datetime (time/datetime 2015 12 1)))})
+                                                                     :timestamp (t/date-time 2015 12 1)})
 
                              (let [mongo-bc (blockchain/new-mongo "Testcoin" stores-m)]
                                (fact "The budget per account is correct"
@@ -119,6 +121,6 @@
 
                                      (fact "Filtering by dates works properly."
                                            (count (blockchain/list-transactions mongo-bc {})) => 5
-                                           (count (blockchain/list-transactions mongo-bc {:from (.toDate (:datetime (time/datetime 2016 11 30)))})) => 4
-                                           (count (blockchain/list-transactions mongo-bc {:from (.toDate (:datetime (time/datetime 2016 11 30)))
-                                                                                          :to (.toDate (:datetime (time/datetime 2016 12 2)))})) => 2))))))
+                                           (count (blockchain/list-transactions mongo-bc {:from (t/date-time 2016 11 30)})) => 4
+                                           (count (blockchain/list-transactions mongo-bc {:from (t/date-time 2016 11 30)
+                                                                                          :to (t/date-time 2016 12 2)})) => 2))))))

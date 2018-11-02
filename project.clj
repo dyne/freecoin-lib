@@ -10,7 +10,7 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [com.taoensso/timbre "4.10.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]
-                 [simple-time "0.2.1" :exclusions [joda-time]]
+
                  [environ "1.1.0"]
                  [clojure-humanize "0.2.2"]
 
@@ -33,7 +33,10 @@
                  [failjure "1.3.0"]
 
                  ;; Use mongo bson data types like Decimal128
-                 [org.mongodb/mongodb-driver "3.8.2"]]
+                 [org.mongodb/mongodb-driver "3.8.2"]
+
+                 ;; Needed for monger.json
+                 [cheshire "5.8.1"]]
 
   :source-paths ["src"]
   :resource-paths ["resources" "test-resources"]
