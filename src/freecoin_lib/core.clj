@@ -45,7 +45,12 @@
              [config :as btc-conf]]
             [failjure.core :as f]
             [monger.conversion :refer [from-db-object]]
-            [clj-time.core :as t]))
+            [clj-time.core :as t]
+            monger.joda-time
+            monger.json)
+  (:import [org.joda.time DateTimeZone]))
+
+(DateTimeZone/setDefault DateTimeZone/UTC)
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -215,7 +220,6 @@ Used to identify the class type."
     (f/if-let-ok? [parsed-amount (utils/string->Decimal128 amount)]
       ;; FIXME: oh no timestamp was saved as a string
       (let [timestamp (if-let [time (:timestamp params)] time (t/now))
-            _ (log/info "TIMESTAMP IS " (class timestamp))
             tags (or (:tags params) [])
             transaction-id (or (:transaction-id params) (fxc/generate 32))
             description (or (:description params) "")

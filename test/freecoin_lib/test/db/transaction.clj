@@ -31,9 +31,7 @@
              [core :as blockchain]]
             [freecoin-lib.db.freecoin :as freecoin]
             [taoensso.timbre :as log]
-            [clj-time.core :as t]
-            monger.joda-time
-            monger.json))
+            [clj-time.core :as t]))
 
 (against-background [(before :contents (test-db/setup-db))
                      (after :contents (test-db/teardown-db))]
