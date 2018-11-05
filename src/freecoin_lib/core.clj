@@ -120,10 +120,6 @@ Used to identify the class type."
 ;; TODO
 (defrecord nxt [server port])
 
-(defn- normalize-transactions [list]
-  (reverse
-   (sort-by :timestamp list)))
-
 (defn merge-params [params f name updater]
   (if-let [request-value (params name)]
     (let [resolved-param (updater request-value)
@@ -201,13 +197,12 @@ Used to identify the class type."
               items-per-page (atom default-items)]
           (when page (reset! current-page page))
           (when per-page (reset! items-per-page per-page)) 
-          (normalize-transactions
-           (storage/list-per-page (:transaction-store stores-m)
-                                  (-> params
-                                      (dissoc :page :per-page) 
-                                      add-transaction-list-params)
-                                  @current-page
-                                  @items-per-page))))))
+          (storage/list-per-page (:transaction-store stores-m)
+                                 (-> params
+                                     (dissoc :page :per-page) 
+                                     add-transaction-list-params)
+                                 @current-page
+                                 @items-per-page)))))
 
   (get-transaction   [bk txid]
     (let [response (storage/query (:transaction-store stores-m) {:transaction-id txid})]

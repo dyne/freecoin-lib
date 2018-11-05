@@ -101,14 +101,14 @@
                                            second-two-entries '({:amount 20 :currency "FAIR" :from-id "C" :to-id "A"}
                                                                 {:amount 2 :currency "mongo" :from-id "B" :to-id "C"})
                                            last-entry '({:amount 50 :currency "mongo" :from-id "A" :to-id "C" :description "something"})]
-                                       (map #(dissoc % :timestamp)
-                                            (blockchain/list-transactions mongo-bc {:page 0 :per-page 2})) => first-two-entries
-                                       (map #(dissoc % :timestamp)
-                                            (blockchain/list-transactions mongo-bc {:page 1 :per-page 2})) => first-two-entries
-                                       (map #(dissoc % :timestamp)
-                                            (blockchain/list-transactions mongo-bc {:page 2 :per-page 2})) => second-two-entries 
-                                       (map #(dissoc % :timestamp)
-                                            (blockchain/list-transactions mongo-bc {:page 3 :per-page 2})) => last-entry)
+                                       (reverse (map #(dissoc % :timestamp)
+                                                     (blockchain/list-transactions mongo-bc {:page 0 :per-page 2}))) => first-two-entries
+                                       (reverse (map #(dissoc % :timestamp)
+                                                     (blockchain/list-transactions mongo-bc {:page 1 :per-page 2}))) => first-two-entries
+                                       (reverse (map #(dissoc % :timestamp)
+                                                     (blockchain/list-transactions mongo-bc {:page 2 :per-page 2}))) => second-two-entries 
+                                       (reverse (map #(dissoc % :timestamp)
+                                                     (blockchain/list-transactions mongo-bc {:page 3 :per-page 2}))) => last-entry)
                                      (fact "Paging works also with other criteria"
                                            (count (blockchain/list-transactions mongo-bc { :account-id "A"})) => 4
                                            (count (blockchain/list-transactions mongo-bc { :account-id "A" :page 1 :per-page 2})) => 2
