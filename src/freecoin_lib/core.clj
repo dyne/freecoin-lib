@@ -37,7 +37,6 @@
             [freecoin-lib
              [utils :as utils]
              [config :as config]]
-            [simple-time.core :as time]
             [schema.core :as s]
             [freecoin-lib.schemas :refer [StoresMap
                                           RPCconfig]]
@@ -45,7 +44,13 @@
              [core :as btc]
              [config :as btc-conf]]
             [failjure.core :as f]
-            [monger.conversion :refer [from-db-object]]))
+            [monger.conversion :refer [from-db-object]]
+            [clj-time.core :as t]
+            monger.joda-time
+            monger.json)
+  (:import [org.joda.time DateTimeZone]))
+
+(DateTimeZone/setDefault DateTimeZone/UTC)
 
 (defprotocol Blockchain
   ;; blockchain identifier
@@ -115,13 +120,13 @@ Used to identify the class type."
 ;; TODO
 (defrecord nxt [server port])
 
-(defn- normalize-transactions [list]
-  (reverse
-   (sort-by :timestamp list)))
-
 (defn merge-params [params f name updater]
   (if-let [request-value (params name)]
-    (merge f (updater request-value))
+    (let [resolved-param (updater request-value)
+          resolved-key (-> resolved-param first key)]
+      (if (and (keyword? resolved-key) (resolved-key f))
+        (merge-with merge f resolved-param)
+        (merge f resolved-param)))
     f))
 
 (defn add-transaction-list-params [request-params]
@@ -130,7 +135,7 @@ Used to identify the class type."
              {:to
               (fn [v] {:timestamp {"$lt" v}})
               :from
-              (fn [v] {:timestamp {"$gt" v}})
+              (fn [v] {:timestamp {"$gte" v}})
               :account-id
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})
               :tags
@@ -145,10 +150,10 @@ Used to identify the class type."
               (fn [v] {"$or" [{:from-id v} {:to-id v}]})}))
 
 ;; inherits from Blockchain and implements its methods
-(s/defrecord Mongo [stores-m :- StoresMap]
+(s/defrecord Mongo [label :- s/Str stores-m :- StoresMap]
   Blockchain
   (label [bk]
-    (recname bk))
+    label)
 
   (import-account [bk account-id secret]
     nil)
@@ -180,7 +185,7 @@ Used to identify the class type."
           sent     (if sent-map (:total sent-map) 0)]
       (- received sent)))
 
-  (list-transactions [bk {:keys [page per-page] :as params}]
+  (list-transactions [bk {:keys [page per-page tags from to] :as params}]
     ;; TODO extract
     (let [limit 100
           first-page 0
@@ -192,13 +197,12 @@ Used to identify the class type."
               items-per-page (atom default-items)]
           (when page (reset! current-page page))
           (when per-page (reset! items-per-page per-page)) 
-          (normalize-transactions
-           (storage/list-per-page (:transaction-store stores-m)
-                                  (-> params
-                                      (dissoc :page :per-page :count :from) 
-                                      add-transaction-list-params)
-                                  @current-page
-                                  @items-per-page))))))
+          (storage/list-per-page (:transaction-store stores-m)
+                                 (-> params
+                                     (dissoc :page :per-page) 
+                                     add-transaction-list-params)
+                                 @current-page
+                                 @items-per-page)))))
 
   (get-transaction   [bk txid]
     (let [response (storage/query (:transaction-store stores-m) {:transaction-id txid})]
@@ -208,10 +212,12 @@ Used to identify the class type."
 
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
-    (f/if-let-ok? [parsed-amount (utils/validate-input-amount amount)]
-      (let [timestamp (time/format (if-let [time (:timestamp params)] time (time/now)))
+    (f/if-let-ok? [parsed-amount (utils/string->Decimal128 amount)]
+      ;; FIXME: oh no timestamp was saved as a string
+      (let [timestamp (if-let [time (:timestamp params)] time (t/now))
             tags (or (:tags params) [])
             transaction-id (or (:transaction-id params) (fxc/generate 32))
+            description (or (:description params) "")
             transaction {:_id (str timestamp "-" from-account-id)
                          :currency (or (:currency params) "MONGO")
                          :timestamp timestamp
@@ -220,7 +226,8 @@ Used to identify the class type."
                          :tags tags
                          :amount parsed-amount
                          :amount-text amount
-                         :transaction-id transaction-id}]
+                         :transaction-id transaction-id
+                         :description description}]
         ;; TODO: Maybe better to do a batch insert with
         ;; monger.collection/insert-batch? More efficient for a large
         ;; amount of inserts
@@ -271,8 +278,8 @@ Used to identify the class type."
 
 (s/defn ^:always-validate new-mongo
   "Check that the blockchain is available, then return a record"
-  [stores-m :- StoresMap]
-  (s/validate Mongo (map->Mongo {:stores-m stores-m})))
+  [currency :- s/Str stores-m :- StoresMap]
+  (s/validate Mongo (map->Mongo {:label currency :stores-m stores-m})))
 
 (defn in-memory-filter [entry params]
   true)
@@ -318,15 +325,17 @@ Used to identify the class type."
   (create-transaction  [bk from-account-id amount to-account-id params]
     ;; to make tests possible the timestamp here is generated starting from
     ;; the 1 december 2015 plus a number of days that equals the amount
-    (let [now (time/format (time/add-days (time/datetime 2015 12 1) amount))
+    (let [now (t/now) 
           tags (or (:tags params) #{})
+          description (or (:description params) "")
           transaction {:transaction-id (str now "-" from-account-id)
                        :currency "INMEMORYBLOCKCHAIN"
                        :timestamp now
                        :from-id from-account-id
                        :to-id to-account-id
                        :tags tags
-                       :amount amount}]
+                       :amount amount
+                       :description description}]
 
       (doall (map #(swap! tags-atom assoc {:tag %
                                            :created-by from-account-id
@@ -400,6 +409,9 @@ Used to identify the class type."
       (with-error-response
         (if received-by-address
           (btc/listreceivedbyaddress :config rpc-config)
+          ;; FIX: Only transactions from the local wallet command.
+          ;; Get raw transaction, get block command.
+          ;; Node is full node, operates on local wallet.
           (btc/listtransactions :config rpc-config
                                 :account account-id
                                 :count count
@@ -421,13 +433,16 @@ Used to identify the class type."
     (try
       (with-error-response (btc/sendfrom :config rpc-config
                                          :fromaccount from-account-id
-                                         :amount amount
+                                         :amount (utils/string->BigDecimal amount)
                                          :tobitcoinaddress to-account-id
-                                         :comment (:comment params)
-                                         :commentto (:commentto params)))
+                                         :comment (or (:comment params) "")
+                                         :commentto (or (:commentto params) "")))
       (catch java.lang.AssertionError e
         (log/error "ERROR " e)
-        (f/fail "No transaction possible. Error: " (.getMessage e)))))
+        (f/fail "No transaction possible. Error: " e))
+      (catch java.lang.Exception e
+        (log/error "Exception " e)
+        (f/fail "Transaction amount too small: " e))))
 
   ;; ATTENTION: if the to-account or from-account dont exist they will be created
   (move [bk from-account-id amount to-account-id params]

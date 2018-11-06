@@ -30,7 +30,8 @@
              [utils :as utils]
              [core :as blockchain]]
             [freecoin-lib.db.freecoin :as freecoin]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [clj-time.core :as t]))
 
 (against-background [(before :contents (test-db/setup-db))
                      (after :contents (test-db/teardown-db))]
@@ -42,31 +43,37 @@
                                                                      :to-id "B"
                                                                      :currency "mongo"
                                                                      ;; TODO add tags and test them
-                                                                     :amount 1})
+                                                                     :amount 1
+                                                                     :timestamp (t/date-time 2017 12 1)})
 
                              (storage/store! transaction-store :id_ {:from-id "A"
                                                                      :to-id "C"
                                                                      :currency "mongo"
                                                                      ;; TODO add tags and test them
-                                                                     :amount 2})
+                                                                     :amount 2
+                                                                     :timestamp (t/date-time 2017 12 1)})
 
                              (storage/store! transaction-store :id_ {:from-id "B"
                                                                      :to-id "C"
                                                                      :currency "mongo"
                                                                      ;; TODO add tags and test them
-                                                                     :amount 2})
+                                                                     :amount 2
+                                                                     :timestamp (t/date-time 2016 12 1)})
                              (storage/store! transaction-store :id_ {:from-id "C"
                                                                      :to-id "A"
                                                                      :currency "FAIR"
                                                                      ;; TODO add tags and test them
-                                                                     :amount 20})
+                                                                     :amount 20
+                                                                     :timestamp (t/date-time 2016 12 1)})
                              (storage/store! transaction-store :id_ {:from-id "A"
                                                                      :to-id "C"
                                                                      :currency "mongo"
                                              
-                                                                     :amount 50})
+                                                                     :amount 50
+                                                                     :description "something"
+                                                                     :timestamp (t/date-time 2015 12 1)})
 
-                             (let [mongo-bc (blockchain/new-mongo stores-m)]
+                             (let [mongo-bc (blockchain/new-mongo "Testcoin" stores-m)]
                                (fact "The budget per account is correct"
                                      (blockchain/get-balance mongo-bc "A") => -33M
                                      (blockchain/get-balance mongo-bc "B") => -1M
@@ -93,15 +100,25 @@
                                                                {:amount 1 :currency "mongo" :from-id "A" :to-id "B"})
                                            second-two-entries '({:amount 20 :currency "FAIR" :from-id "C" :to-id "A"}
                                                                 {:amount 2 :currency "mongo" :from-id "B" :to-id "C"})
-                                           last-entry '({:amount 50 :currency "mongo" :from-id "A" :to-id "C"})]
-                                       (blockchain/list-transactions mongo-bc {:page 0 :per-page 2}) => first-two-entries
-                                       (blockchain/list-transactions mongo-bc {:page 1 :per-page 2}) => first-two-entries
-                                       (blockchain/list-transactions mongo-bc {:page 2 :per-page 2}) => second-two-entries 
-                                       (blockchain/list-transactions mongo-bc {:page 3 :per-page 2}) => last-entry)
+                                           last-entry '({:amount 50 :currency "mongo" :from-id "A" :to-id "C" :description "something"})]
+                                       (reverse (map #(dissoc % :timestamp)
+                                                     (blockchain/list-transactions mongo-bc {:page 0 :per-page 2}))) => first-two-entries
+                                       (reverse (map #(dissoc % :timestamp)
+                                                     (blockchain/list-transactions mongo-bc {:page 1 :per-page 2}))) => first-two-entries
+                                       (reverse (map #(dissoc % :timestamp)
+                                                     (blockchain/list-transactions mongo-bc {:page 2 :per-page 2}))) => second-two-entries 
+                                       (reverse (map #(dissoc % :timestamp)
+                                                     (blockchain/list-transactions mongo-bc {:page 3 :per-page 2}))) => last-entry)
                                      (fact "Paging works also with other criteria"
                                            (count (blockchain/list-transactions mongo-bc { :account-id "A"})) => 4
                                            (count (blockchain/list-transactions mongo-bc { :account-id "A" :page 1 :per-page 2})) => 2
                                            (count (blockchain/list-transactions mongo-bc { :account-id "A" :page 3 :per-page 2})) => 0)
                                      (fact "The count of transactions works properly."
                                            (blockchain/count-transactions mongo-bc {}) => (count (storage/query transaction-store {}))
-                                           (blockchain/count-transactions mongo-bc {:currency "mongo"}) => (count (storage/query transaction-store {:currency "mongo"}))))))))
+                                           (blockchain/count-transactions mongo-bc {:currency "mongo"}) => (count (storage/query transaction-store {:currency "mongo"})))
+
+                                     (fact "Filtering by dates works properly."
+                                           (count (blockchain/list-transactions mongo-bc {})) => 5
+                                           (count (blockchain/list-transactions mongo-bc {:from (t/date-time 2016 11 30)})) => 4
+                                           (count (blockchain/list-transactions mongo-bc {:from (t/date-time 2016 11 30)
+                                                                                          :to (t/date-time 2016 12 2)})) => 2))))))

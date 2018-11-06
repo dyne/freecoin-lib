@@ -1,4 +1,4 @@
-(defproject org.clojars.dyne/freecoin-lib "0.11.0-SNAPSHOT"  
+(defproject org.clojars.dyne/freecoin-lib "1.0-SNAPSHOT"  
   :description "Freecoin digital currency toolkit"
   :url "https://freecoin.dyne.org"
   
@@ -7,15 +7,15 @@
             :year 2017
             :key "gpl-3.0"}
 
-  :dependencies [[org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
                  [com.taoensso/timbre "4.10.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]
-                 [simple-time "0.2.1" :exclusions [joda-time]]
+
                  [environ "1.1.0"]
                  [clojure-humanize "0.2.2"]
 
                  ;; storage
-                 [org.clojars.dyne/clj-storage "0.7.0"]
+                 [org.clojars.dyne/clj-storage "0.8.0-SNAPSHOT"]
 
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]
@@ -24,16 +24,19 @@
                  [org.clojars.dyne/auxiliary "0.4.0"]
 
                  ;; Data validation
-                 [prismatic/schema "1.1.6"]
+                 [prismatic/schema "1.1.9"]
 
                  ;; Bitcoin lib
-                 [clj-btc "0.11.2"]
+                 [clj-frc "0.1.2"]
 
                  ;; error handling
-                 [failjure "1.2.0"]
+                 [failjure "1.3.0"]
 
                  ;; Use mongo bson data types like Decimal128
-                 [org.mongodb/mongodb-driver "3.6.0-beta2"]]
+                 [org.mongodb/mongodb-driver "3.8.2"]
+
+                 ;; Needed for monger.json
+                 [cheshire "5.8.1"]]
 
   :source-paths ["src"]
   :resource-paths ["resources" "test-resources"]
@@ -45,7 +48,8 @@
              ]
   :env [[:base-url "http://localhost:8000"]]
   :profiles {:dev [:dev-common :dev-local]
-             :dev-common {:dependencies [[midje "1.8.3"]]
+             :dev-common {:dependencies [[midje "1.9.2"]]
                           :repl-options {:init-ns freecoin-lib.core}
                           :plugins [[lein-midje "3.1.3"]]}}
+  :aliases {"test"  ["midje"]}
   :plugins [[lein-environ "1.0.0"]])

@@ -7,7 +7,8 @@
             [clj-storage.db.mongo :as mongo]
             [clj-storage.core :as storage]
             [schema.core :as s]
-            [taoensso.timbre :as log])
+            [taoensso.timbre :as log]
+            [clj-time.core :as t])
   (:import [freecoin_lib.core BtcRpc]))
 
 (facts "Validate agaist schemas"
@@ -20,7 +21,7 @@
                  (s/validate fc/StoresMap stores-m) => truthy
 
                  ;; TODO validate TTl
-                 (blockchain/new-mongo stores-m) => truthy
+                 (blockchain/new-mongo "Testcoin" stores-m) => truthy
 
                  (blockchain/new-mongo nil) => (throws Exception)))
 
@@ -31,3 +32,11 @@
                  (blockchain/new-btc-rpc "FAIR" conf-file) => truthy
                  (s/validate BtcRpc (blockchain/new-btc-rpc "FAIR" conf-file)) => truthy
                  (blockchain/new-btc-rpc nil) => (throws Exception))))
+
+(facts "Test internal functions"
+       (fact "Test the parameter composition for lib requests"
+             (blockchain/add-transaction-list-params
+              {:from (t/date-time 2016 11 30)
+               :to (t/date-time 2016 12 2)})
+             => {:timestamp {"$lt" (t/date-time 2016 12 2)
+                             "$gte" (t/date-time 2016 11 30)}}))
