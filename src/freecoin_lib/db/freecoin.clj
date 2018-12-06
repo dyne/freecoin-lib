@@ -8,7 +8,8 @@
   {"wallet-store" {}
    "confirmation-store" {}
    "transaction-store"  {}
-   "tag-store" {}})
+   "tag-store" {}
+   "apikey-store" {:index :apikey}})
 
 (defn create-freecoin-stores [db & args]
   (log/debug "Creating the freecoin mongo stores")

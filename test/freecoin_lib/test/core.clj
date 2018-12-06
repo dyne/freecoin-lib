@@ -11,7 +11,7 @@
             [clj-time.core :as t])
   (:import [freecoin_lib.core BtcRpc]))
 
-(facts "Validate agaist schemas"
+(facts "Validate against schemas"
 
          (fact Created Mongo stores fit the schema
                (let [uri "mongodb://localhost:27017/some-db"
