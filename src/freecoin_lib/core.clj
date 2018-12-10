@@ -219,7 +219,7 @@ Used to identify the class type."
             transaction-id (or (:transaction-id params) (fxc/generate 32))
             description (or (:description params) "")
             transaction {:_id (str timestamp "-" from-account-id)
-                         :currency (or (:currency params) "MONGO")
+                         :currency label
                          :timestamp timestamp
                          :from-id from-account-id
                          :to-id to-account-id
