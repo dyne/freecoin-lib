@@ -141,7 +141,9 @@ Used to identify the class type."
               :tags
               (fn [v] {:tags {"$in" v}})
               :currency
-              (fn [v] {:currency v})}))
+              (fn [v] {:currency v})
+              :description
+              (fn [v] {:description v})}))
 
 (defn add-tags-list-params [request-params]
   (reduce-kv (partial merge-params request-params)
