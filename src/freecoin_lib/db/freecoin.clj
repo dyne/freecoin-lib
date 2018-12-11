@@ -9,7 +9,8 @@
    "confirmation-store" {}
    "transaction-store"  {}
    "tag-store" {}
-   "apikey-store" {:index :apikey}})
+   "apikey-store" {:unique-index [:apikey
+                                  :client-app]}})
 
 (defn create-freecoin-stores [db & args]
   (log/debug "Creating the freecoin mongo stores")
