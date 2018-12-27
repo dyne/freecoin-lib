@@ -29,8 +29,8 @@
   (storage/store! apikey-store :client-app (dissoc apikey-map
                                                    :apikey-store)))
 
-(defn fetch-by-client-app [apikey-store-store client-app]
-  (storage/fetch apikey-store-store client-app))
+(defn fetch-by-client-app [apikey-store client-app]
+  (storage/fetch apikey-store client-app))
 
 (defn fetch-by-api-key [apikey-store api-key]
   (first (storage/query apikey-store {:api-key api-key})))
