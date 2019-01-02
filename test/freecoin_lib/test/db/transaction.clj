@@ -121,4 +121,7 @@
                                            (count (blockchain/list-transactions mongo-bc {})) => 5
                                            (count (blockchain/list-transactions mongo-bc {:from (t/date-time 2016 11 30)})) => 4
                                            (count (blockchain/list-transactions mongo-bc {:from (t/date-time 2016 11 30)
-                                                                                          :to (t/date-time 2016 12 2)})) => 2))))))
+                                                                                          :to (t/date-time 2016 12 2)})) => 2)
+                                     (fact "Filtering by desciption also works."
+                                           (count (blockchain/list-transactions mongo-bc {:description "something"})) => 1
+                                           (count (blockchain/list-transactions mongo-bc {:description "something else"})) => 0))))))

@@ -141,7 +141,9 @@ Used to identify the class type."
               :tags
               (fn [v] {:tags {"$in" v}})
               :currency
-              (fn [v] {:currency v})}))
+              (fn [v] {:currency v})
+              :description
+              (fn [v] {:description v})}))
 
 (defn add-tags-list-params [request-params]
   (reduce-kv (partial merge-params request-params)
@@ -219,7 +221,7 @@ Used to identify the class type."
             transaction-id (or (:transaction-id params) (fxc/generate 32))
             description (or (:description params) "")
             transaction {:_id (str timestamp "-" from-account-id)
-                         :currency (or (:currency params) "MONGO")
+                         :currency label
                          :timestamp timestamp
                          :from-id from-account-id
                          :to-id to-account-id
