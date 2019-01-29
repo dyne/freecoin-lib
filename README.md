@@ -1,26 +1,39 @@
-# Freecoin crypto wallet toolkit - core library
-
-
-[![software by Dyne.org](https://www.dyne.org/wp-content/uploads/2015/12/software_by_dyne.png)](http://www.dyne.org)
+# Freecoin-lib - library to facilitate blockchain functions
 
 The freecoin lib is the basic component of the social wallet toolkit. It contains implementations to an interface based on blockchain interactions. It is backed up by mongoDB and it contains one to one interactions, higher level interactions and metadata.
 
-Social wallet is a toolkit to build participatory budget management wallets on top of multiple crypto-currency backends. It is open source and written in Clojure. Freecoin's main use-case is that of developing "social wallets" where balances and transactions are trasparent to entire groups of people to help participatory budgeting activities and organisational awareness.
+Social wallet (aka Freecoin) is a toolkit to build participatory budget management wallets on top of multiple crypto-currency backends. It is open source and written in Clojure. Freecoin's main use-case is that of developing "social wallets" where balances and transactions are trasparent to entire groups of people to help participatory budgeting activities and organisational awareness.
 
-[![Clojars Project](https://clojars.org/org.clojars.dyne/freecoin-lib/latest-version.svg)](https://clojars.org/org.clojars.dyne/freecoin-lib)
+
+<a href="https://www.dyne.org"><img
+src="https://secrets.dyne.org/static/img/swbydyne.png"
+alt="software by Dyne.org"
+title="software by Dyne.org" class="pull-right"></a>
+
+[Getting started](#Getting-Started) | [Prerequisites](#Prerequisites) | [Running](#Running) | [Running the tests](#Running-the-tests) | [Deployment](#Deployment) | [Todos](#Todos) | [Acknowledgements](#Acknowledgements) | [Licence](#Licence) | [change log](https://github.com/Commonfare-net/social-wallet-api/blob/master/CHANGELOG.markdown) 
 
 [![Build Status](https://travis-ci.org/Commonfare-net/freecoin-lib.svg?branch=master)](https://travis-ci.org/Commonfare-net/freecoin-lib)
+[![Clojars Project](https://clojars.org/org.clojars.dyne/freecoin-lib/latest-version.svg)](https://clojars.org/org.clojars.dyne/freecoin-lib)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-For more informations see: https://freecoin.dyne.org
+This library is the base component for the social wallet (previously called Freecoin): https://freecoin.dyne.org
 
 [![Freecoin.dyne.org](https://freecoin.dyne.org/images/freecoin_logo.png)](https://freecoin.dyne.org)
 
-## Running the app locally
+## Getting started
+<img class="pull-right"
+src="https://secrets.dyne.org/static/img/clojure.png">
+
+The Freecoin-lib is written in Clojure and is fully
+cross-platform: one can run it locally on a GNU/Linux machine, as well
+on Apple/OSX and MS/Windows.
+
+### Prerequisites
 
 Install all necessary dependencies, for instance using the following packages found on APT based systems:
 
 ```
-openjdk-7-jdk mongodb libversioneer-clojure haveged mongodb-server
+openjdk version > 7,  mongodb, libversioneer-clojure, haveged, mongodb-server
 ```
 
 then install Leiningen which will take care of all Clojure dependencies
@@ -37,40 +50,54 @@ then start the MongoDB server in which Freecoin will store its data:
 sudo service mongod start
 ```
 
-then from inside the Freecoin source, start it with
+### Running
+
+From inside the Freecoin source, start it with
 
 ```
 lein repl
 (start)
 ```
+This is useful for development. For production we have wrapped the base lib in a Swagger API which, the [social wallet API](https://github.com/Commonfare-net/social-wallet-api).
 
-## License
+## Running the tests
+
+To run all tests one need to run
+` lein midje`
+on the project dir
+
+## Deployment
+
+Look at the [social wallet API](https://github.com/Commonfare-net/social-wallet-api)
+
+## Todos
+
+- Implement interfacing with more blockchain endpoints like other than the Bitcoin and its forks.
+- Implement interfacing with more DBs like GraphDB.
 
 
-This Free and Open Source research and development activity is funded by the European Commission in the context of Collective Awareness Platforms for Sustainability and Social Innovation (CAPSSI) grants nr.610349 and nr.687922.
+## Acknowledgements
 
-The Freecoin toolkit is Copyright (C) 2015-2017 by the Dyne.org Foundation, Amsterdam
+Freecoin-lib development is lead by Aspasia Beneti <aspra@dyne.org>
 
-Freecoin development is lead by Aspasia Beneti <aspra@dyne.org>
-
-Freecoin co-design is lead by Denis Roio <jaromil@dyne.org> and Marco Sachy <radium@dyne.org>
+Freecoin-lib co-design is lead by Denis Roio <jaromil@dyne.org> and Marco Sachy <radium@dyne.org>
 
 With expert contributions by Carlo Sciolla, Duncan Mortimer, Arjan Scherpenisse, Amy Welch, Gareth Rogers, Joonas Pekkanen, Thomas König and Enric Duran.
 
-The Freecoin "cornucopia" logo is an artwork by Andrea Di Cesare.
+The Freecoin-lib is Free and Open Source research and development
+activity funded by the European Commission in the context of
+the
+[Collective Awareness Platforms for Sustainability and Social Innovation (CAPSSI)](https://ec.europa.eu/digital-single-market/en/collective-awareness) program. It is used as the
+underlying 
+blockchain implementation library and adopted as a component of the
+social wallet toolkit being developed for
+the [Commonfare project](https://pieproject.eu) (grant nr. 687922) .
 
 
-```
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+## Licence
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+This project is licensed under the AGPL 3 License - see the [LICENCE](LICENCE) file for details
 
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-```
+#### Additional permission under GNU AGPL version 3 section 7.
+
+If you modify Freecoin-lib, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
