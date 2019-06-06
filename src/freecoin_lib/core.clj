@@ -30,7 +30,6 @@
             [freecoin-lib.db
              [tag :as tag]]
             [clj-storage.core :as storage]
-            [clj-storage.db.mongo :as mongo]
             [freecoin-lib
              [utils :as utils]
              [config :as config]]
@@ -76,6 +75,7 @@
   (get-tag       [bk name params])
   (create-tag    [bk name params])
   (remove-tag    [bk name])
+  (count-tags    [bk params])
 
   ;; vouchers
   (create-voucher [bk account-id amount expiration secret])
@@ -271,6 +271,9 @@ Used to identify the class type."
   (get-tag [bk name params]
     (first (filter #(= name (:tag %)) (list-tags bk params))))
 
+  (count-tags [bk params] 
+    (storage/count* (:tag-store stores-m) params))
+  
   (create-voucher [bk account-id amount expiration secret] nil)
 
   (redeem-voucher [bk account-id voucher] nil))
