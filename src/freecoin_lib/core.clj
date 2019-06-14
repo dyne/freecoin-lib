@@ -209,6 +209,10 @@ Used to identify the class type."
         (first response)
         (f/fail "Not found"))))
 
+  ;; We need to create the tags through transactions and not on their own otherwie the amount and count aggregation to list them wont work
+  #_(create-tag 
+    )
+  
   ;; TODO: get rid of account-ids and replace with wallets
   (create-transaction  [bk from-account-id amount to-account-id params]
     (f/if-let-ok? [parsed-amount (utils/string->Decimal128 amount)]
