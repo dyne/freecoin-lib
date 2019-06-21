@@ -47,7 +47,7 @@
                                    (blockchain/count-tags mongo-bc {}) => 5)
 
                              (fact "Listing tags works"
-                                   (:count (last (blockchain/list-tags mongo-bc {}))) => 4)
+                                   (:count (first (filter #(= (:tag %) "project-1") (blockchain/list-tags mongo-bc {})))) => 4)
                              
                              (fact "Can get a tag by name"
                                    (:created-by (blockchain/get-tag mongo-bc "project-1" {})) => "participant-1")
