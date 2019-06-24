@@ -17,7 +17,7 @@
 
 ;; If you modify this Program, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(defproject org.clojars.dyne/freecoin-lib "1.3.0-SNAPSHOT"  
+(defproject org.clojars.dyne/freecoin-lib "1.4.0-SNAPSHOT"  
   :description "Freecoin digital currency toolkit - core library"
   :url "https://freecoin.dyne.org"
   
@@ -34,7 +34,7 @@
                  [clojure-humanize "0.2.2"]
 
                  ;; storage
-                 [org.clojars.dyne/clj-storage "0.9.0"]
+                 [org.clojars.dyne/clj-storage "0.10.0"]
 
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]
