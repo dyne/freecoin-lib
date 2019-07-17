@@ -2,14 +2,14 @@
   (:require [midje.sweet :refer [facts => fact truthy throws]]
             [freecoin-lib
              [core  :as blockchain]
-             [schemas :as fc]]
+             [schemas :as fc]
+             [sawtooth :as sawtooth]]
             [freecoin-lib.db.freecoin :as db]
             [clj-storage.db.mongo :as mongo]
-            [clj-storage.core :as storage]
             [schema.core :as s]
-            [taoensso.timbre :as log]
             [clj-time.core :as t])
-  (:import [freecoin_lib.core BtcRpc]))
+  (:import [freecoin_lib.core BtcRpc]
+           [freecoin_lib.sawtooth Sawtooth]))
 
 (facts "Validate against schemas"
 
@@ -25,13 +25,18 @@
 
                  (blockchain/new-mongo nil) => (throws Exception)))
 
-         (fact "bCreated BTC RPC record validates against the schemas"
+         (fact "Created BTC RPC record validates against the schemas"
                (let [conf-file (-> "sample-btc-rpc.conf"
                                    (clojure.java.io/resource)
                                    (.getPath))]
                  (blockchain/new-btc-rpc "FAIR" conf-file) => truthy
                  (s/validate BtcRpc (blockchain/new-btc-rpc "FAIR" conf-file)) => truthy
-                 (blockchain/new-btc-rpc nil) => (throws Exception))))
+                 (blockchain/new-btc-rpc nil) => (throws Exception)))
+
+         (fact "Created a Sawtooth record that validates against the schemas"
+               (sawtooth/new-sawtooth "SAW" {:host "http://localhost:8008"}) => truthy
+               (s/validate Sawtooth (sawtooth/new-sawtooth "SAW" {:host "http://localhost:8008"})) => truthy
+               (sawtooth/new-sawtooth nil) => (throws Exception)))
 
 (facts "Test internal functions"
        (fact "Test the parameter composition for lib requests"
