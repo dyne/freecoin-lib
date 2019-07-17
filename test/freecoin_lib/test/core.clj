@@ -1,5 +1,5 @@
 (ns freecoin-lib.test.core
-  (:require [midje.sweet :refer :all]
+  (:require [midje.sweet :refer [facts => fact truthy throws]]
             [freecoin-lib
              [core  :as blockchain]
              [schemas :as fc]]
@@ -13,7 +13,7 @@
 
 (facts "Validate against schemas"
 
-         (fact Created Mongo stores fit the schema
+         (fact "Created Mongo stores fit the schema"
                (let [uri "mongodb://localhost:27017/some-db"
                      db (mongo/get-mongo-db uri)
                      stores-m (db/create-freecoin-stores  db)]
@@ -25,7 +25,7 @@
 
                  (blockchain/new-mongo nil) => (throws Exception)))
 
-         (fact Created BTC RPC record validates against the schemas
+         (fact "bCreated BTC RPC record validates against the schemas"
                (let [conf-file (-> "sample-btc-rpc.conf"
                                    (clojure.java.io/resource)
                                    (.getPath))]
