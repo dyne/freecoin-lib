@@ -23,54 +23,31 @@
 
 ;; If you modify Freecoin-lib, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
-(ns freecoin-lib.schemas
-  (:require [schema.core :as s]
-            [clj-storage.db.mongo :refer (->MongoStore)]))
+(ns freecoin-lib.sawtooth
+  (:require [freecoin-lib.db
+             [tag :as tag]]
+            [schema.core :as s]
+            [freecoin-lib.schemas :refer [RestApiConf]]
+            [clj-http.client :as client])
+  (:import [freecoin_lib.core Blockchain]))
 
-(def schema_mongo
-  {:port s/Num
-   :host s/Str
-   :db   s/Str})
+(s/defrecord Sawtooth [label :- s/Str
+                       restapi-conf :- RestApiConf]
+  Blockchain
+  (label [bk]
+    label)
+  
+  (list-transactions [bk params]
+    (client/get (:host restapi-conf)))
+  
+  (get-transaction   [bk txid]
+    )
+  
+  #_(create-transaction  [bk from-account-id amount to-account-id params]
+      ))
 
-(def schema_bitcoin_compatible
-  {:host s/Str
-   :port s/Num
-   :pass s/Str})
-
-(s/defschema Config
-  {
-   (s/required-key :mongo) schema_mongo
-
-   (s/optional-key :faircoin)   schema_bitcoin_compatible
-
-   (s/optional-key :bitcoin)    schema_bitcoin_compatible
-
-   (s/optional-key :litecoin)   schema_bitcoin_compatible
-
-   (s/optional-key :multichain) schema_bitcoin_compatible
-
-   ;;  (s/optional-key :ethereum)
-   ;;  {:socket s/Str}
-
-   })
-
-;; internal validator for mongo backend (used by core/new-mongo)
-(s/defschema StoresMap
-  {:wallet-store clj_storage.db.mongo.MongoStore
-   :confirmation-store clj_storage.db.mongo.MongoStore
-   :transaction-store clj_storage.db.mongo.MongoStore
-   :tag-store clj_storage.db.mongo.MongoStore
-   :apikey-store clj_storage.db.mongo.MongoStore})
-
-(def RPCconfig
-  {:rpcpassword s/Str
-   :rpcuser s/Str
-   (s/optional-key :testnet) s/Bool
-   :rpcport s/Int
-   :rpchost s/Str
-   (s/optional-key :txindex) s/Int
-   (s/optional-key :daemon) s/Int
-   (s/optional-key :port) s/Int})
-
-(s/defschema RestApiConf
-  {:host s/Str})
+(s/defn ^:always-validate new-sawtooth
+  [currency :- s/Str
+   restapi-conf :- RestApiConf]
+  (s/validate Sawtooth (map->Sawtooth {:label currency
+                                       :restapi-conf restapi-conf})))
