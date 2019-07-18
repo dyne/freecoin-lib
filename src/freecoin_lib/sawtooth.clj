@@ -36,7 +36,8 @@
     label)
   
   (list-transactions [bk params]
-    (client/get (:host restapi-conf)))
+    ;; TODO: add parameters
+    (client/get (str (:host restapi-conf) "/transactions")))
   
   (get-transaction   [bk txid]
     )
