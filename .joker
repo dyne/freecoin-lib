@@ -15,7 +15,8 @@
    schema.core/defschema
    dom-top.core/letr
    dom-top.core/return
-   schema.core/defrecord]
+   schema.core/defrecord
+   clojure.core/defrecord]
  :known-namespaces
    [clojure.string clojure.set]
  :known-tags

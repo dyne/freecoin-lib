@@ -23,7 +23,6 @@
             [clj-storage.core :as storage]
             [clj-storage.test.db.test-db :as test-db]
             [freecoin-lib
-             [utils :as utils]
              [core :as blockchain]]
             [freecoin-lib.db.freecoin :as freecoin]
             [taoensso.timbre :as log]
