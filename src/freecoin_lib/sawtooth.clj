@@ -26,7 +26,9 @@
 (ns freecoin-lib.sawtooth
   (:require [schema.core :as s]
             [freecoin-lib.schemas :refer [RestApiConf]]
-            [clj-http.client :as client])
+            [clj-http.client :as client]
+            [taoensso.timbre :as log]
+            [failjure.core :as f])
   (:import [freecoin_lib.core Blockchain]))
 
 (s/defrecord Sawtooth [label :- s/Str
@@ -37,7 +39,10 @@
   
   (list-transactions [bk params]
     ;; TODO: add parameters
-    (client/get (str (:host restapi-conf) "/transactions")))
+    (let [response (client/get (str (:host restapi-conf) "/transactions") {:as :json-string-keys})]
+      (if (= 200 (:status response))
+        (log/spy (:body response))
+        (f/fail "The sawtooth request responded with " (:status response)))))
   
   (get-transaction   [bk txid]
     )
