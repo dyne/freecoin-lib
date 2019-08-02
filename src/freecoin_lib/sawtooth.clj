@@ -24,9 +24,9 @@
             [clj-http.client :as client]
             [taoensso.timbre :as log]
             [failjure.core :as f]
-            [clj-cbor.core :as cbor])
-  (:import [freecoin_lib.core Blockchain]
-           [java.util Base64]))
+            [clj-cbor.core :as cbor]
+            [freecoin-lib.core :as freecoin])
+  (:import [java.util Base64]))
 
 
 (defn parse-payload [payload]
@@ -35,19 +35,23 @@
 
 (s/defrecord Sawtooth [label :- s/Str
                        restapi-conf :- RestApiConf]
-  Blockchain
+  freecoin/Blockchain
   (label [bk]
     label)
   
   (list-transactions [bk params]
-    ;; TODO: add parameters
+    ;; TODO: add paging parameters
     (let [response (client/get (str (:host restapi-conf) "/transactions") {:as :json-string-keys})]
       (if (= 200 (:status response))
-        (log/spy (:body response))
+        (:body response)
         (f/fail "The sawtooth request responded with " (:status response)))))
   
-  (get-transaction   [bk txid]
-    )
+  (get-transaction [bk txid]
+    (let [response (client/get (str (:host restapi-conf) "/transactions/" txid) {:as :json-string-keys})]
+      (if (= 200 (:status response))
+        (let [body (:body response)]
+          (update-in body ["data" "payload"] #(parse-payload %)))
+        (f/fail "The sawtooth request responded with " (:status response)))))
   
   #_(create-transaction  [bk from-account-id amount to-account-id params]
       ))
