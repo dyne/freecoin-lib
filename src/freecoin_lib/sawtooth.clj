@@ -3,15 +3,10 @@
 ;; part of Decentralized Citizen Engagement Technologies (D-CENT)
 ;; R&D funded by the European Commission (FP7/CAPS 610349)
 
-;; Copyright (C) 2015- Dyne.org foundation
+;; Copyright (C) 2019- Dyne.org foundation
 
 ;; Sourcecode designed, written and maintained by
-;; Denis Roio <jaromil@dyne.org>
 ;; Aspasia Beneti <aspra@dyne.org>
-
-;; With contributions by
-;; Carlo Sciolla
-;; Arjan Scherpenisse <arjan@scherpenisse.net>
 
 ;; Freecoin-lib is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -28,8 +23,15 @@
             [freecoin-lib.schemas :refer [RestApiConf]]
             [clj-http.client :as client]
             [taoensso.timbre :as log]
-            [failjure.core :as f])
-  (:import [freecoin_lib.core Blockchain]))
+            [failjure.core :as f]
+            [clj-cbor.core :as cbor])
+  (:import [freecoin_lib.core Blockchain]
+           [java.util Base64]))
+
+
+(defn parse-payload [payload]
+  (let [base64-decoded-payload (.decode (Base64/getDecoder) payload)]
+    (cbor/decode base64-decoded-payload)))
 
 (s/defrecord Sawtooth [label :- s/Str
                        restapi-conf :- RestApiConf]
