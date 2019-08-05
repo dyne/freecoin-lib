@@ -74,3 +74,9 @@
 
 (s/defschema RestApiConf
   {:host s/Str})
+
+(s/defschema Payload
+  {(s/required-key "script") s/Str
+   (s/required-key "data") s/Str
+   (s/required-key "keys") s/Str
+   (s/required-key "context_id") s/Str})

@@ -1,7 +1,6 @@
 (ns freecoin-lib.test.sawtooth
   (:require [midje.sweet :refer [facts => fact truthy throws]]
             [freecoin-lib
-             [schemas :as fc]
              [sawtooth :as saw]]))
 
 (facts "Check that we can decode the payload"

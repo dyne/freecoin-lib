@@ -20,11 +20,12 @@
 
 (ns freecoin-lib.sawtooth
   (:require [schema.core :as s]
-            [freecoin-lib.schemas :refer [RestApiConf]]
+            [freecoin-lib.schemas :refer [RestApiConf Payload]]
             [clj-http.client :as client]
             [taoensso.timbre :as log]
             [failjure.core :as f]
             [clj-cbor.core :as cbor]
+            [cheshire.core :as json]
             [freecoin-lib.core :as freecoin])
   (:import [java.util Base64]))
 
@@ -52,9 +53,26 @@
         (let [body (:body response)]
           (update-in body ["data" "payload"] #(parse-payload %)))
         (f/fail "The sawtooth request responded with " (:status response)))))
-  
-  #_(create-transaction  [bk from-account-id amount to-account-id params]
-      ))
+
+  ;; Implement the create like https://github.com/DECODEproject/sawroom/blob/master/tp/processor/handler.py#L58.
+  ;; TODO: should I rename from sawtooth to the new name?
+  (create-transaction  [bk from-account-id amount to-account-id {:keys [script data keys context-id]}]
+    (let [payload-map {"script" script
+                       "data" data
+                       "keys" keys
+                       "context_id" context-id}]
+      (f/if-let-failed? [validation-error (log/spy (f/try* (s/validate Payload (log/spy payload-map))))]
+        (f/fail (f/message validation-error))
+        
+        (let [payload (json/generate-string payload-map)
+              serialized-transaction (cbor/encode payload)
+              response (client/post (str (:host restapi-conf) "/batches")
+                                    {:headers {:Content-Type "application/octet-stream"}
+                                     :body serialized-transaction})]
+          (log/info "LALA")
+          (if (= 202 (:status response))
+            (log/spy (:body response))
+            (f/fail "The sawtooth request responded with " (:status response))))))))
 
 (s/defn ^:always-validate new-sawtooth
   [currency :- s/Str
