@@ -27,12 +27,21 @@
             [clj-cbor.core :as cbor]
             [cheshire.core :as json]
             [freecoin-lib.core :as freecoin])
-  (:import [java.util Base64]))
+  (:import [java.util Base64]
+           [sawtooth.sdk.signing Secp256k1Context]
+           [sawtooth.sdk.signing Signer]))
 
+(defonce context (new Secp256k1Context))
+(def private-key  (.newRandomPrivateKey context))
+(def signer (new Signer context private-key))
 
 (defn parse-payload [payload]
   (let [base64-decoded-payload (.decode (Base64/getDecoder) payload)]
     (cbor/decode base64-decoded-payload)))
+
+
+(defn- create-zenroom-transaction []
+  )
 
 (s/defrecord Sawtooth [label :- s/Str
                        restapi-conf :- RestApiConf]
@@ -61,16 +70,14 @@
                        "data" data
                        "keys" keys
                        "context_id" context-id}]
-      (f/if-let-failed? [validation-error (log/spy (f/try* (s/validate Payload (log/spy payload-map))))]
+      (f/if-let-failed? [validation-error (f/try* (s/validate Payload (log/spy payload-map)))]
         (f/fail (f/message validation-error))
-        
         (let [payload (json/generate-string payload-map)
               serialized-transaction (cbor/encode payload)
               response (client/post (str (:host restapi-conf) "/batches")
                                     {:headers {:Content-Type "application/octet-stream"}
                                      :body serialized-transaction})]
-          (log/info "LALA")
-          (if (= 202 (:status response))
+          (if (= 202 (:status (log/spy response)))
             (log/spy (:body response))
             (f/fail "The sawtooth request responded with " (:status response))))))))
 

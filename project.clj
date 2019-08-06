@@ -61,10 +61,15 @@
                  [clj-http "3.10.0"]
 
                  ;;  Concise Binary Object Representation
-                 [mvxcvi/clj-cbor "0.7.2"]]
+                 [mvxcvi/clj-cbor "0.7.2"]
 
+                 ;; Sawtooth-jdk
+                 [local/sawtooth-sdk-signing "v0.1.2"]
+                 ]
+
+  :repositories {"local" "file:maven_repository"}
   :source-paths ["src"]
-  :resource-paths ["resources" "test-resources"]
+  :resource-paths ["resources" "test-resources" "file:maven_repository"]
   :jvm-opts ["-Djava.security.egd=file:/dev/random"
              ;; use a proper random source (install haveged)
 
