@@ -26,10 +26,16 @@
             [failjure.core :as f]
             [clj-cbor.core :as cbor]
             [cheshire.core :as json]
-            [freecoin-lib.core :as freecoin])
+            [freecoin-lib.core :as freecoin]
+            [buddy.hashers :as hashers])
   (:import [java.util Base64]
            [sawtooth.sdk.signing Secp256k1Context]
-           [sawtooth.sdk.signing Signer]))
+           [sawtooth.sdk.signing Signer]
+           [sawtooth.sdk.protobuf TransactionHeader]
+           [sawtooth.sdk.protobuf Transaction]
+           [com.google.protobuf ByteString]
+           [sawtooth.sdk.protobuf BatchHeader]
+           [sawtooth.sdk.protobuf Batch]))
 
 (defonce context (new Secp256k1Context))
 (def private-key  (.newRandomPrivateKey context))
@@ -39,9 +45,44 @@
   (let [base64-decoded-payload (.decode (Base64/getDecoder) payload)]
     (cbor/decode base64-decoded-payload)))
 
+(defn encode-payload [payload-m]
+  (let [cbor (json/generate-cbor payload-m)]
+    (.encode (Base64/getEncoder) cbor)))
 
-(defn- create-zenroom-transaction []
-  )
+(defn- create-transaction-header [signer payload-bytes]
+  (let [inputs-outputs ["879e1d"]]
+  (doto (TransactionHeader/newBuilder)
+    (.setSignerPublicKey (.hex (.getPublicKey signer)))
+    (.setFamilyName "zenroom")
+    (.setFamilyVersion "1.0")
+    (.addInputs inputs-outputs)
+    (.addOutputs inputs-outputs)
+    (.setPayloadSha512 (hashers/derive payload-bytes))
+    (.setBatchPublicKey (.hex (.getPublicKey signer)))
+    (.setNonce (.toString (java.util.UUID/randomUUID)))
+    (.build))))
+
+(defn- create-transaction [payload-bytes header signer]
+  (let [signature (.sign signer (.toByteArray header))]
+    (doto (Transaction/newBuilder)
+      (.setHeader (.toByteString header))
+      (.setPayload (ByteString/copyFrom payload-bytes))
+      (.setHeaderSignature signature)
+      (.build))))
+
+(defn- create-batch-header [signer transaction]
+  (doto (BatchHeader/newBuilder)
+    (.setSignerPublicKey (.hex (.getPublicKey signer)))
+    (.addAllTransactionIds '((.getHeaderSignature transaction)))
+    (.build)))
+
+(defn- create-batch [batch-header transactions]
+  (let [batch-signature (.sign signer (.toByteArray batch-header))]
+        (doto (Batch/newBuilder)
+          (.setHeader (.toByteString batch-header))
+          (.addAllTransactions transactions)
+          (.setHeaderSignature batch-signature)
+          (.build))))
 
 (s/defrecord Sawtooth [label :- s/Str
                        restapi-conf :- RestApiConf]
@@ -72,11 +113,14 @@
                        "context_id" context-id}]
       (f/if-let-failed? [validation-error (f/try* (s/validate Payload (log/spy payload-map)))]
         (f/fail (f/message validation-error))
-        (let [payload (json/generate-string payload-map)
-              serialized-transaction (cbor/encode payload)
+        (let [payload-bytes (encode-payload payload-map)
+              transaction-header (create-transaction-header signer payload-bytes)
+              transaction (create-transaction payload-bytes transaction-header signer)
+              batch-header (create-batch-header signer transaction)
+              batch (create-batch batch-header [transaction])
               response (client/post (str (:host restapi-conf) "/batches")
-                                    {:headers {:Content-Type "application/octet-stream"}
-                                     :body serialized-transaction})]
+                                    {:headers  {:Content-Type "application/octet-stream"}
+                                     :body batch})]
           (if (= 202 (:status (log/spy response)))
             (log/spy (:body response))
             (f/fail "The sawtooth request responded with " (:status response))))))))
