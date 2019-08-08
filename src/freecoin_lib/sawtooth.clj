@@ -25,9 +25,7 @@
             [taoensso.timbre :as log]
             [failjure.core :as f]
             [clj-cbor.core :as cbor]
-            [cheshire.core :as json]
-            [freecoin-lib.core :as freecoin]
-            [buddy.hashers :as hashers])
+            [freecoin-lib.core :as freecoin])
   (:import [java.util Base64]
            [sawtooth.sdk.signing Secp256k1Context]
            [sawtooth.sdk.signing Signer]
@@ -35,7 +33,9 @@
            [sawtooth.sdk.protobuf Transaction]
            [com.google.protobuf ByteString]
            [sawtooth.sdk.protobuf BatchHeader]
-           [sawtooth.sdk.protobuf Batch]))
+           [sawtooth.sdk.protobuf Batch]
+           [java.security MessageDigest]
+           [com.google.common.io BaseEncoding]))
 
 (defonce context (new Secp256k1Context))
 (def private-key  (.newRandomPrivateKey context))
@@ -46,23 +46,30 @@
     (cbor/decode base64-decoded-payload)))
 
 (defn encode-payload [payload-m]
-  (let [cbor (json/generate-cbor payload-m)]
-    (.encode (Base64/getEncoder) cbor)))
+  (cbor/encode payload-m))
 
-(defn- create-transaction-header [signer payload-bytes]
-  (let [inputs-outputs ["879e1d"]]
+(defn do-hash [payload-bytes]
+  (let [digest (doto (MessageDigest/getInstance "SHA-512")
+                 (.reset)
+                 (.update payload-bytes)
+                 (.digest))]
+    (log/info "DIGEST " digest)
+    (.encode (.lowerCase (BaseEncoding/base16)) payload-bytes)))
+
+(defn create-transaction-header [signer payload-bytes]
+  (let [inputs-outputs "1cf1266e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7"]
   (doto (TransactionHeader/newBuilder)
     (.setSignerPublicKey (.hex (.getPublicKey signer)))
     (.setFamilyName "zenroom")
     (.setFamilyVersion "1.0")
     (.addInputs inputs-outputs)
     (.addOutputs inputs-outputs)
-    (.setPayloadSha512 (hashers/derive payload-bytes))
-    (.setBatchPublicKey (.hex (.getPublicKey signer)))
+    (.setPayloadSha512 (do-hash payload-bytes))
+    (.setBatcherPublicKey (.hex (.getPublicKey signer)))
     (.setNonce (.toString (java.util.UUID/randomUUID)))
     (.build))))
 
-(defn- create-transaction [payload-bytes header signer]
+(defn create-transaction [payload-bytes header signer]
   (let [signature (.sign signer (.toByteArray header))]
     (doto (Transaction/newBuilder)
       (.setHeader (.toByteString header))

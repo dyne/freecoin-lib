@@ -65,10 +65,7 @@
 
                  ;; Sawtooth-jdk
                  [local/sawtooth-sdk-signing "v0.1.2"]
-                 [local/sawtooth-sdk-protos "v0.1.2"]
-
-                 ;; For creating a sha512 hash
-                 [buddy/buddy-hashers "1.4.0"]]
+                 [local/sawtooth-sdk-protos "v0.1.2"]]
 
   :repositories {"local" "file:maven_repository"}
   :source-paths ["src"]
