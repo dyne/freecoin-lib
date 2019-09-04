@@ -57,33 +57,36 @@
     (.encode (.lowerCase (BaseEncoding/base16)) payload-bytes)))
 
 (defn create-transaction-header [signer payload-bytes]
-  (let [inputs-outputs "1cf1266e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7"]
-  (doto (TransactionHeader/newBuilder)
-    (.setSignerPublicKey (.hex (.getPublicKey signer)))
-    (.setFamilyName "zenroom")
-    (.setFamilyVersion "1.0")
-    (.addInputs inputs-outputs)
-    (.addOutputs inputs-outputs)
-    (.setPayloadSha512 (do-hash payload-bytes))
-    (.setBatcherPublicKey (.hex (.getPublicKey signer)))
-    (.setNonce (.toString (java.util.UUID/randomUUID)))
-    (.build))))
+  (let [inputs-outputs "1cf1266e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7"
+        builder (TransactionHeader/newBuilder)]
+    (doto builder
+      (.setSignerPublicKey (.hex (.getPublicKey signer)))
+      (.setFamilyName "zenroom")
+      (.setFamilyVersion "1.0")
+      (.addInputs inputs-outputs)
+      (.addOutputs inputs-outputs)
+      (.setPayloadSha512 (do-hash payload-bytes))
+      (.setBatcherPublicKey (.hex (.getPublicKey signer)))
+      (.setNonce (.toString (java.util.UUID/randomUUID))))
+    (-> builder (.build))))
 
-(defn create-transaction [payload-bytes header signer]
-  (let [signature (.sign signer (.toByteArray header))]
-    (doto (Transaction/newBuilder)
-      (.setHeader (.toByteString header))
-      (.setPayload (ByteString/copyFrom payload-bytes))
-      (.setHeaderSignature signature)
-      (.build))))
+(defn create-sawtooth-transaction [payload-bytes header signer]
+  (log/info "Type header " (class header))
+  (log/info "HEADER " (.getSerializedSize header))
+  (let [signature (.sign signer (log/spy (.toByteArray header)))]
+    (log/info "HERE HEADER " header)
+    (.build (doto (Transaction/newBuilder)
+              (.setHeader (.toByteString header))
+              (.setPayload (ByteString/copyFrom payload-bytes))
+              (.setHeaderSignature signature)))))
 
-(defn- create-batch-header [signer transaction]
+(defn create-batch-header [signer transaction]
   (doto (BatchHeader/newBuilder)
     (.setSignerPublicKey (.hex (.getPublicKey signer)))
     (.addAllTransactionIds '((.getHeaderSignature transaction)))
     (.build)))
 
-(defn- create-batch [batch-header transactions]
+(defn create-batch [batch-header transactions]
   (let [batch-signature (.sign signer (.toByteArray batch-header))]
         (doto (Batch/newBuilder)
           (.setHeader (.toByteString batch-header))
@@ -122,12 +125,12 @@
         (f/fail (f/message validation-error))
         (let [payload-bytes (encode-payload payload-map)
               transaction-header (create-transaction-header signer payload-bytes)
-              transaction (create-transaction payload-bytes transaction-header signer)
-              batch-header (create-batch-header signer transaction)
-              batch (create-batch batch-header [transaction])
+              transaction (create-sawtooth-transaction payload-bytes transaction-header signer)
+              batch-header (create-batch-header signer (log/spy transaction))
+              batch (create-batch (log/spy batch-header) [transaction])
               response (client/post (str (:host restapi-conf) "/batches")
                                     {:headers  {:Content-Type "application/octet-stream"}
-                                     :body batch})]
+                                     :body (log/spy batch)})]
           (if (= 202 (:status (log/spy response)))
             (log/spy (:body response))
             (f/fail "The sawtooth request responded with " (:status response))))))))

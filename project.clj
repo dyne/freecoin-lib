@@ -34,7 +34,8 @@
                  [clojure-humanize "0.2.2"]
 
                  ;; storage
-                 [org.clojars.dyne/clj-storage "0.10.0"]
+                 [org.clojars.dyne/clj-storage "0.10.0" :exclusions [com.taoensso/encore
+                                                                     org.clojure/tools.reader]]
 
                  ;; fxc secret sharing protocol
                  [org.clojars.dyne/fxc "0.5.0"]
@@ -61,11 +62,12 @@
                  [clj-http "3.10.0"]
 
                  ;;  Concise Binary Object Representation
-                 [mvxcvi/clj-cbor "0.7.2"]
+                 [mvxcvi/clj-cbor "0.7.2" :exclusions [org.clojure/spec.alpha
+                                                       org.clojure/core.specs.alpha]]
 
                  ;; Sawtooth-jdk
                  [local/sawtooth-sdk-signing "v0.1.2"]
-                 [local/sawtooth-sdk-protos "v0.1.2"]]
+                 [local/sawtooth-sdk-protos "v0.1.2-SNAPSHOT"]]
 
   :repositories {"local" "file:maven_repository"}
   :source-paths ["src"]
@@ -78,7 +80,8 @@
              ]
   :env [[:base-url "http://localhost:8000"]]
   :profiles {:dev [:dev-common :dev-local]
-             :dev-common {:dependencies [[midje "1.9.2"]]
+             :dev-common {:dependencies [[midje "1.9.2" :exclusions [org.clojure/clojure
+                                                                     joda-time]]]
                           :repl-options {:init-ns freecoin-lib.core}
                           :plugins [[lein-midje "3.1.3"]]}}
   :aliases {"test"  ["midje"]}
