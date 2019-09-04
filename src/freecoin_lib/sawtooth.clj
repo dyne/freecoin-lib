@@ -31,7 +31,7 @@
            [sawtooth.sdk.signing Signer]
            [sawtooth.sdk.protobuf TransactionHeader]
            [sawtooth.sdk.protobuf Transaction]
-           [com.google.protobuf ByteString]
+           [sawtooth.sdk.shaded.com.google.protobuf ByteString]
            [sawtooth.sdk.protobuf BatchHeader]
            [sawtooth.sdk.protobuf Batch]
            [java.security MessageDigest]
@@ -73,7 +73,7 @@
 (defn create-sawtooth-transaction [payload-bytes header signer]
   (log/info "Type header " (class header))
   (log/info "HEADER " (.getSerializedSize header))
-  (let [signature (.sign signer (log/spy (.toByteArray header)))]
+  (let [signature (.sign signer (.toByteArray header))]
     (log/info "HERE HEADER " header)
     (.build (doto (Transaction/newBuilder)
               (.setHeader (.toByteString header))
@@ -81,10 +81,9 @@
               (.setHeaderSignature signature)))))
 
 (defn create-batch-header [signer transaction]
-  (doto (BatchHeader/newBuilder)
-    (.setSignerPublicKey (.hex (.getPublicKey signer)))
-    (.addAllTransactionIds '((.getHeaderSignature transaction)))
-    (.build)))
+  (.build (doto (BatchHeader/newBuilder)
+            (.setSignerPublicKey (.hex (.getPublicKey signer)))
+            (.addAllTransactionIds (iterator-seq (.iterator [(.getHeaderSignature transaction)]))))))
 
 (defn create-batch [batch-header transactions]
   (let [batch-signature (.sign signer (.toByteArray batch-header))]
@@ -121,18 +120,18 @@
                        "data" data
                        "keys" keys
                        "context_id" context-id}]
-      (f/if-let-failed? [validation-error (f/try* (s/validate Payload (log/spy payload-map)))]
+      (f/if-let-failed? [validation-error (f/try* (s/validate Payload payload-map))]
         (f/fail (f/message validation-error))
         (let [payload-bytes (encode-payload payload-map)
               transaction-header (create-transaction-header signer payload-bytes)
               transaction (create-sawtooth-transaction payload-bytes transaction-header signer)
-              batch-header (create-batch-header signer (log/spy transaction))
-              batch (create-batch (log/spy batch-header) [transaction])
+              batch-header (create-batch-header signer transaction)
+              batch (create-batch batch-header [transaction])
               response (client/post (str (:host restapi-conf) "/batches")
                                     {:headers  {:Content-Type "application/octet-stream"}
-                                     :body (log/spy batch)})]
-          (if (= 202 (:status (log/spy response)))
-            (log/spy (:body response))
+                                     :body batch})]
+          (if (= 202 (:status response))
+            (:body response)
             (f/fail "The sawtooth request responded with " (:status response))))))))
 
 (s/defn ^:always-validate new-sawtooth
