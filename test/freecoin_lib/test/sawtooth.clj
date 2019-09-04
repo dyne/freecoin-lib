@@ -26,6 +26,7 @@
                    _ (log/info "Before constructikn g transaction")
                    transaction (saw/create-sawtooth-transaction payload-bytes (log/spy transaction-header) saw/signer)
                    batch-header (saw/create-batch-header saw/signer (log/spy transaction))
-                   batch (saw/create-batch (log/spy batch-header) [transaction])]
-               batch => truthy)))
+                   batch (saw/create-batch (log/spy batch-header) [transaction])
+                   batch-list (saw/create-batch-list batch)]
+               batch-list => truthy)))
 

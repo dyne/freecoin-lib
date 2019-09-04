@@ -34,6 +34,7 @@
            [sawtooth.sdk.shaded.com.google.protobuf ByteString]
            [sawtooth.sdk.protobuf BatchHeader]
            [sawtooth.sdk.protobuf Batch]
+           [sawtooth.sdk.protobuf BatchList]
            [java.security MessageDigest]
            [com.google.common.io BaseEncoding]))
 
@@ -87,11 +88,16 @@
 
 (defn create-batch [batch-header transactions]
   (let [batch-signature (.sign signer (.toByteArray batch-header))]
-        (doto (Batch/newBuilder)
-          (.setHeader (.toByteString batch-header))
-          (.addAllTransactions transactions)
-          (.setHeaderSignature batch-signature)
-          (.build))))
+    (.build (doto (Batch/newBuilder)
+              (.setHeader (.toByteString batch-header))
+              (.addAllTransactions transactions)
+              (.setHeaderSignature batch-signature)))))
+
+(defn create-batch-list [batch]
+  (-> (doto (BatchList/newBuilder)
+        (.addBatches batch))
+      (.build)
+      (.toByteArray)))
 
 (s/defrecord Sawtooth [label :- s/Str
                        restapi-conf :- RestApiConf]
@@ -127,9 +133,10 @@
               transaction (create-sawtooth-transaction payload-bytes transaction-header signer)
               batch-header (create-batch-header signer transaction)
               batch (create-batch batch-header [transaction])
+              batch-list (create-batch-list batch)
               response (client/post (str (:host restapi-conf) "/batches")
                                     {:headers  {:Content-Type "application/octet-stream"}
-                                     :body batch})]
+                                     :body batch-list})]
           (if (= 202 (:status response))
             (:body response)
             (f/fail "The sawtooth request responded with " (:status response))))))))
