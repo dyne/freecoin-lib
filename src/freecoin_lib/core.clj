@@ -80,7 +80,14 @@
   ;; vouchers
   (create-voucher [bk account-id amount expiration secret])
   (redeem-voucher [bk account-id voucher])
-  (list-vouchers  [bk]))
+  (list-vouchers  [bk])
+
+  ;; petitions
+  (create-petition [bk json])
+  (sign-petition [bk petition-id json])
+  (tally-petition [bk petition-id json])
+  (count-petition [bk petition-id])
+  (get-petition [bk petition-id]))
 
 (defrecord voucher
     [_id

@@ -73,4 +73,5 @@
    (s/optional-key :port) s/Int})
 
 (s/defschema RestApiConf
-  {:host s/Str})
+  {:sawtooth-api s/Str
+   :petition-api s/Str})

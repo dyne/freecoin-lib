@@ -27,7 +27,8 @@
   (:require [environ.core :as env]))
 
 (def env-vars #{:port :host :base-url :secure :debug
-                :client-id :client-secret :rpc-config})
+                :client-id :client-secret :rpc-config
+                :sawtooth-api :petition-api})
 
 (defn create-config []
   (select-keys env/env env-vars))

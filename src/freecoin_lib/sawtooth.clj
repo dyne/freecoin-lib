@@ -28,10 +28,24 @@
             [freecoin-lib.core :as freecoin])
   (:import [java.util Base64]))
 
+(defonce petition-token (atom ""))
 
+;; TODO: add mongo endpoints
 (defn parse-payload [payload]
   (let [base64-decoded-payload (.decode (Base64/getDecoder) payload)]
     (cbor/decode base64-decoded-payload)))
+
+(defn with-token [restapi-conf request username password]
+  "The petition api works with an oath 2 token that can expire. This is a wrapper funcion that if returns a not authorized reponse, requests a a new token, stores it and adds it to the requst headers."
+  (if (clojure.string/blank? @petition-token)
+    (let [response (client/post (str (:sawtooth-api restapi-conf) "/token") {:as :json-string-keys
+                                                                             :basic-auth [username password]})]
+      (if (= 200 (:status response))
+        (do (reset! petition-token (:token (:body response)))
+            (with-token restapi-conf request username password))
+        (f/fail "The sawtooth token request responded with " (:status response))))
+    ;; TODO here wrap the request with the token header. Break request to url params etc. 
+    (let [response ((fn [req] ) request)])))
 
 (s/defrecord Sawtooth [label :- s/Str
                        restapi-conf :- RestApiConf]
@@ -41,20 +55,53 @@
   
   (list-transactions [bk params]
     ;; TODO: add paging parameters
-    (let [response (client/get (str (:host restapi-conf) "/transactions") {:as :json-string-keys})]
+    (let [response (client/get (str (:sawtooth-api restapi-conf) "/transactions") {:as :json-string-keys})]
       (if (= 200 (:status response))
         (:body response)
         (f/fail "The sawtooth request responded with " (:status response)))))
   
   (get-transaction [bk txid]
-    (let [response (client/get (str (:host restapi-conf) "/transactions/" txid) {:as :json-string-keys})]
+    (let [response (client/get (str (:sawtooth-api restapi-conf) "/transactions/" txid) {:as :json-string-keys})]
       (if (= 200 (:status response))
         (let [body (:body response)]
           (update-in body ["data" "payload"] #(parse-payload %)))
         (f/fail "The sawtooth request responded with " (:status response)))))
+
+  ;; TODO add schema check for json
+  (create-petition [bx json]
+    (let [response (client/post (str (:petition-api restapi-conf) "/petitions/") {:as :json-string-keys})]
+      (if (= 201 (:status response))
+        (let [body (:body response)]
+          body)
+        (f/fail "The create petition request responded with " (:status response)))))
   
-  #_(create-transaction  [bk from-account-id amount to-account-id params]
-      ))
+  (sign-petition [bx petition-id json]
+    (let [response (client/post (str (:petition-api restapi-conf) "/petitions/" petition-id "/sign") {:as :json-string-keys})]
+      (if (= 200 (:status response))
+        (let [body (:body response)]
+          body)
+        (f/fail "The sign petition request responded with " (:status response)))))
+
+  (tally-petition [bx petition-id json]
+    (let [response (client/post (str (:petition-api restapi-conf) "/petitions/" petition-id "/tally") {:as :json-string-keys})]
+      (if (= 200 (:status response))
+        (let [body (:body response)]
+          body)
+        (f/fail "The tally petition request responded with " (:status response)))))
+
+  (count-petition [bx petition-id]
+    (let [response (client/get (str (:petition-api restapi-conf) "/petitions/" petition-id "/count") {:as :json-string-keys})]
+      (if (= 200 (:status response))
+        (let [body (:body response)]
+          body)
+        (f/fail "The count petition request responded with " (:status response)))))
+
+  (get-petition [bx petition-id]
+    (let [response (client/get (str (:petition-api restapi-conf) "/petitions/" petition-id "/tally") {:as :json-string-keys})]
+      (if (= 200 (:status response))
+        (let [body (:body response)]
+          body)
+        (f/fail "The get petition request responded with " (:status response))))))
 
 (s/defn ^:always-validate new-sawtooth
   [currency :- s/Str
