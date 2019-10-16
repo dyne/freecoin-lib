@@ -20,7 +20,7 @@
 
 (ns freecoin-lib.sawtooth
   (:require [schema.core :as s]
-            [freecoin-lib.schemas :refer [RestApiConf]]
+            [freecoin-lib.schemas :refer [RestApiConf Credentials]]
             [clj-http.client :as client]
             [taoensso.timbre :as log]
             [failjure.core :as f]
@@ -28,27 +28,23 @@
             [freecoin-lib.core :as freecoin])
   (:import [java.util Base64]))
 
-(defonce petition-token (atom ""))
-
 ;; TODO: add mongo endpoints
 (defn parse-payload [payload]
   (let [base64-decoded-payload (.decode (Base64/getDecoder) payload)]
     (cbor/decode base64-decoded-payload)))
 
-(defn with-token [restapi-conf request username password]
-  "The petition api works with an oath 2 token that can expire. This is a wrapper funcion that if returns a not authorized reponse, requests a a new token, stores it and adds it to the requst headers."
-  (if (clojure.string/blank? @petition-token)
-    (let [response (client/post (str (:sawtooth-api restapi-conf) "/token") {:as :json-string-keys
-                                                                             :basic-auth [username password]})]
-      (if (= 200 (:status response))
-        (do (reset! petition-token (:token (:body response)))
-            (with-token restapi-conf request username password))
-        (f/fail "The sawtooth token request responded with " (:status response))))
-    ;; TODO here wrap the request with the token header. Break request to url params etc. 
-    (let [response ((fn [req] ) request)])))
+(defn get-token [restapi-conf username password]
+  "The petition api works with an oath 2 token that can expire. Here we request the token every time and return the string reuired for the authentication header"
+  (let [response (client/post (str (:petition-api restapi-conf) "/token") {:headers {"content-type" "application/x-www-form-urlencoded"}
+                                                                           :body (str "username=" username "&password=" password)
+                                                                           :as :json-strict-string-keys})]
+    (if (= 200 (:status response))
+      (get (:body response) "access_token")
+      (f/fail "The sawtooth token request responded with " (:status response)))))
 
 (s/defrecord Sawtooth [label :- s/Str
-                       restapi-conf :- RestApiConf]
+                       restapi-conf :- RestApiConf
+                       credentials :- Credentials]
   freecoin/Blockchain
   (label [bk]
     label)
@@ -90,14 +86,23 @@
         (f/fail "The tally petition request responded with " (:status response)))))
 
   (count-petition [bx petition-id]
-    (let [response (client/get (str (:petition-api restapi-conf) "/petitions/" petition-id "/count") {:as :json-string-keys})]
+    (log/info "lala")
+    (let [response (client/get (str (:petition-api restapi-conf) "/petitions/" petition-id "/count")
+                               {:query-params {"address" (:sawtooth-api restapi-conf)}
+                                :as :json
+                                :accept :json
+                                :decompress-body false
+                                :oauth-token (get-token restapi-conf (:username credentials) (:password credentials))})]
       (if (= 200 (:status response))
         (let [body (:body response)]
-          body)
+          (-> body :results))
         (f/fail "The count petition request responded with " (:status response)))))
 
   (get-petition [bx petition-id]
-    (let [response (client/get (str (:petition-api restapi-conf) "/petitions/" petition-id "/tally") {:as :json-string-keys})]
+    (let [response (client/get (str (:petition-api restapi-conf) "/petitions/" petition-id)
+                                {:headers {"Authorization" (get-token restapi-conf (:username credentials) (:password credentials))}
+                                :as :json
+                                :debug :true})]
       (if (= 200 (:status response))
         (let [body (:body response)]
           body)
@@ -105,6 +110,8 @@
 
 (s/defn ^:always-validate new-sawtooth
   [currency :- s/Str
-   restapi-conf :- RestApiConf]
+   restapi-conf :- RestApiConf
+   credentials :- Credentials]
   (s/validate Sawtooth (map->Sawtooth {:label currency
-                                       :restapi-conf restapi-conf})))
+                                       :restapi-conf restapi-conf
+                                       :credentials credentials})))

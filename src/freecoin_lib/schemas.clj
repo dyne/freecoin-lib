@@ -74,4 +74,9 @@
 
 (s/defschema RestApiConf
   {:sawtooth-api s/Str
-   :petition-api s/Str})
+   :petition-api s/Str
+   :credentials-file s/Str})
+
+(s/defschema Credentials
+  {:username s/Str
+   :password s/Str})
