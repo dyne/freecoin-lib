@@ -34,8 +34,17 @@
                  (blockchain/new-btc-rpc nil) => (throws Exception)))
 
          (fact "Created a Sawtooth record that validates against the schemas"
-               (sawtooth/new-sawtooth "SAW" {:host "http://localhost:8008"}) => truthy
-               (s/validate Sawtooth (sawtooth/new-sawtooth "SAW" {:host "http://localhost:8008"})) => truthy
+               (sawtooth/new-sawtooth "SAW"
+                                      {:sawtooth-api "http://localhost:8090"
+                                       :petition-api "http://localhost:9009"
+                                       :credentials-file "credentials.yaml"}
+                                      {:username "user"
+                                       :password "pas"}) => truthy
+               (s/validate Sawtooth (sawtooth/new-sawtooth "SAW" {:sawtooth-api "http://localhost:8090"
+                                                                  :petition-api "http://localhost:9009"
+                                                                  :credentials-file "credentials.yaml"}
+                                                           {:username "user"
+                                                            :password "pas"})) => truthy
                (sawtooth/new-sawtooth nil) => (throws Exception)))
 
 (facts "Test internal functions"

@@ -34,13 +34,20 @@
     (cbor/decode base64-decoded-payload)))
 
 (defn get-token [restapi-conf username password]
-  "The petition api works with an oath 2 token that can expire. Here we request the token every time and return the string reuired for the authentication header"
+  "The petition api works with an oath 2 token that can expire. Here we request the token every time and return it."
   (let [response (client/post (str (:petition-api restapi-conf) "/token") {:headers {"content-type" "application/x-www-form-urlencoded"}
                                                                            :body (str "username=" username "&password=" password)
                                                                            :as :json-strict-string-keys})]
     (if (= 200 (:status response))
       (get (:body response) "access_token")
       (f/fail "The sawtooth token request responded with " (:status response)))))
+
+(defn construct-base-petition-params [restapi-conf credentials]
+  {:query-params {"address" (:sawtooth-api restapi-conf)}
+   :as :json
+   :accept :json
+   :decompress-body false
+   :oauth-token (get-token restapi-conf (:username credentials) (:password credentials))})
 
 (s/defrecord Sawtooth [label :- s/Str
                        restapi-conf :- RestApiConf
@@ -50,7 +57,7 @@
     label)
   
   (list-transactions [bk params]
-    ;; TODO: add paging parameters
+    ;; TODO: add pagination parameters
     (let [response (client/get (str (:sawtooth-api restapi-conf) "/transactions") {:as :json-string-keys})]
       (if (= 200 (:status response))
         (:body response)
@@ -86,13 +93,8 @@
         (f/fail "The tally petition request responded with " (:status response)))))
 
   (count-petition [bx petition-id]
-    (log/info "lala")
     (let [response (client/get (str (:petition-api restapi-conf) "/petitions/" petition-id "/count")
-                               {:query-params {"address" (:sawtooth-api restapi-conf)}
-                                :as :json
-                                :accept :json
-                                :decompress-body false
-                                :oauth-token (get-token restapi-conf (:username credentials) (:password credentials))})]
+                               (construct-base-petition-params restapi-conf credentials))]
       (if (= 200 (:status response))
         (let [body (:body response)]
           (-> body :results))
@@ -100,9 +102,7 @@
 
   (get-petition [bx petition-id]
     (let [response (client/get (str (:petition-api restapi-conf) "/petitions/" petition-id)
-                                {:headers {"Authorization" (get-token restapi-conf (:username credentials) (:password credentials))}
-                                :as :json
-                                :debug :true})]
+                                (construct-base-petition-params restapi-conf credentials))]
       (if (= 200 (:status response))
         (let [body (:body response)]
           body)
