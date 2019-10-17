@@ -40,8 +40,10 @@
     label)
   
   (list-transactions [bk params]
-    ;; TODO: add paging parameters
-    (let [response (client/get (str (:host restapi-conf) "/transactions") {:as :json-string-keys})]
+    (let [response (client/get (str (:host restapi-conf) "/transactions")
+                               (cond-> {:as :json-string-keys}
+                                 (:start params) (assoc :query-params {"start" (:start params)})
+                                 (:limit params) (update-in [:query-params] #(assoc % "limit" (:limit params)))))]
       (if (= 200 (:status response))
         (:body response)
         (f/fail "The sawtooth request responded with " (:status response)))))
