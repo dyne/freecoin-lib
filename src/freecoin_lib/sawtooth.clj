@@ -73,8 +73,11 @@
   ;; TODO add schema check for json
   (create-petition [bx json]
     (let [response (client/post (str (:petition-api restapi-conf) "/petitions/")
-                                (assoc (construct-base-petition-params restapi-conf credentials)
-                                       :body json))]
+                                (update-in 
+                                 (assoc (construct-base-petition-params restapi-conf credentials)
+                                        :body json)
+                                 [:query-params "address"]
+                                 #(str % "/batches")))]
       (if (= 201 (:status response))
         (let [body (:body response)]
           body)
