@@ -55,14 +55,14 @@
   freecoin/Blockchain
   (label [bk]
     label)
-  
+
   (list-transactions [bk params]
     ;; TODO: add pagination parameters
     (let [response (client/get (str (:sawtooth-api restapi-conf) "/transactions") {:as :json-string-keys})]
       (if (= 200 (:status response))
         (:body response)
         (f/fail "The sawtooth request responded with " (:status response)))))
-  
+
   (get-transaction [bk txid]
     (let [response (client/get (str (:sawtooth-api restapi-conf) "/transactions/" txid) {:as :json-string-keys})]
       (if (= 200 (:status response))
@@ -73,7 +73,7 @@
   ;; TODO add schema check for json
   (create-petition [bx json]
     (let [response (client/post (str (:petition-api restapi-conf) "/petitions/")
-                                (update-in 
+                                (update-in
                                  (assoc (construct-base-petition-params restapi-conf credentials)
                                         :body json)
                                  [:query-params "address"]
@@ -82,7 +82,7 @@
         (let [body (:body response)]
           body)
         (f/fail "The create petition request responded with " (:status response)))))
-  
+
   (sign-petition [bx petition-id json]
     (let [response (client/post
                     (str (:petition-api restapi-conf) "/petitions/" petition-id "/sign")
@@ -97,7 +97,14 @@
         (f/fail "The sign petition request responded with " (:status response)))))
 
   (tally-petition [bx petition-id json]
-    (let [response (client/post (str (:petition-api restapi-conf) "/petitions/" petition-id "/tally") {:as :json-string-keys})]
+    (let [response (client/post
+                    (str (:petition-api restapi-conf) "/petitions/" petition-id "/tally")
+                    (update-in
+                     (assoc (construct-base-petition-params restapi-conf credentials)
+                            :body json)
+                     [:query-params "address"]
+                     #(str % "/batches"))
+                    {:as :json-string-keys})]
       (if (= 200 (:status response))
         (let [body (:body response)]
           body)
@@ -113,7 +120,7 @@
 
   (get-petition [bx petition-id]
     (let [response (client/get (str (:petition-api restapi-conf) "/petitions/" petition-id)
-                                (construct-base-petition-params restapi-conf credentials))]
+                               (construct-base-petition-params restapi-conf credentials))]
       (if (= 200 (:status response))
         (let [body (:body response)]
           body)
