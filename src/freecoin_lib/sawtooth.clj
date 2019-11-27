@@ -84,7 +84,13 @@
         (f/fail "The create petition request responded with " (:status response)))))
   
   (sign-petition [bx petition-id json]
-    (let [response (client/post (str (:petition-api restapi-conf) "/petitions/" petition-id "/sign") {:as :json-string-keys})]
+    (let [response (client/post
+                    (str (:petition-api restapi-conf) "/petitions/" petition-id "/sign")
+                    (update-in
+                     (assoc (construct-base-petition-params restapi-conf credentials)
+                            :body json)
+                     [:query-params "address"]
+                     #(str % "/batches")) {:as :json-string-keys})]
       (if (= 200 (:status response))
         (let [body (:body response)]
           body)
