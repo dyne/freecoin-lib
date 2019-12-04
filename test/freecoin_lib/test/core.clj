@@ -36,13 +36,12 @@
          (fact "Created a Sawtooth record that validates against the schemas"
                (sawtooth/new-sawtooth "SAW"
                                       {:sawtooth-api "http://localhost:8090"
-                                       :petition-api "http://localhost:9009"
-                                       :credentials-file "credentials.yaml"}
+                                       :petition-api "http://localhost:9009"}
                                       {:username "user"
                                        :password "pas"}) => truthy
-               (s/validate Sawtooth (sawtooth/new-sawtooth "SAW" {:sawtooth-api "http://localhost:8090"
-                                                                  :petition-api "http://localhost:9009"
-                                                                  :credentials-file "credentials.yaml"}
+               (s/validate Sawtooth (sawtooth/new-sawtooth "SAW" 
+                                                           {:sawtooth-api "http://localhost:8090"
+                                                            :petition-api "http://localhost:9009"}
                                                            {:username "user"
                                                             :password "pas"})) => truthy
                (sawtooth/new-sawtooth nil) => (throws Exception)))
