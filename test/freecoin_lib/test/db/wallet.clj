@@ -24,7 +24,7 @@
 ;; If you modify Freecoin-lib, or any covered work, by linking or combining it with any library (or a modified version of that library), containing parts covered by the terms of EPL v 1.0, the licensors of this Program grant you additional permission to convey the resulting work. Your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software. Corresponding Source for a non-source form of such a combination shall include the source code for the parts of the libraries (dependencies) covered by the terms of EPL v 1.0 used as well as that of the covered work.
 
 (ns freecoin-lib.test.db.wallet
-  (:require [midje.sweet :refer :all]
+  (:require [midje.sweet :refer [facts fact => just anything n-of tabular]]
             [freecoin-lib.core :as fb]
             [freecoin-lib.db 
              [wallet :as wallet]]

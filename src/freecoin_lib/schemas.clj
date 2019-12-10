@@ -25,7 +25,7 @@
 
 (ns freecoin-lib.schemas
   (:require [schema.core :as s]
-            [clj-storage.db.mongo :as m]))
+            [clj-storage.db.mongo :refer (->MongoStore)]))
 
 (def schema_mongo
   {:port s/Num
@@ -71,3 +71,11 @@
    (s/optional-key :txindex) s/Int
    (s/optional-key :daemon) s/Int
    (s/optional-key :port) s/Int})
+
+(s/defschema RestApiConf
+  {:sawtooth-api s/Str
+   :petition-api s/Str})
+
+(s/defschema Credentials
+  {:username s/Str
+   :password s/Str})

@@ -25,8 +25,7 @@
              [utils :as utils]
              [core :as blockchain]]
             [freecoin-lib.db.freecoin :as freecoin]
-            [taoensso.timbre :as log]
-            [clj-time.core :as t]))
+            [taoensso.timbre :as log]))
 
 (against-background [(before :contents (test-db/setup-db))
                      (after :contents (test-db/teardown-db))]

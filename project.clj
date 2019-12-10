@@ -55,7 +55,13 @@
                  [org.mongodb/mongodb-driver "3.8.2"]
 
                  ;; Needed for monger.json
-                 [cheshire "5.8.1"]]
+                 [cheshire "5.8.1"]
+
+                 ;; http client for sawtooth restapi
+                 [clj-http "3.10.0"]
+
+                 ;;  Concise Binary Object Representation
+                 [mvxcvi/clj-cbor "0.7.2"]]
 
   :source-paths ["src"]
   :resource-paths ["resources" "test-resources"]
